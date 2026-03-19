@@ -1,0 +1,38 @@
+.tutor-profile-form {
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px rgba(33, 37, 41, 0.05);
+
+  &__map-header {
+    margin-bottom: 0.5rem;
+  }
+
+  &__map-title {
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  &__map-help {
+    margin: 0.25rem 0 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  &__map {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    height: 360px;
+    overflow: hidden;
+  }
+
+  &__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f3f5;
+  }
+}
