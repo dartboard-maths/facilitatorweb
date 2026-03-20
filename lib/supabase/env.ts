@@ -1,7 +1,17 @@
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+function requirePublicEnv(value: string | undefined, name: string): string {
+  if (!value) {
+    throw new Error(`Missing ${name}`);
+  }
 
-if (!supabaseUrl) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
-if (!supabaseAnonKey) throw new Error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  return value;
+}
 
-export { supabaseUrl, supabaseAnonKey };
+export const supabaseUrl = requirePublicEnv(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  "NEXT_PUBLIC_SUPABASE_URL",
+);
+
+export const supabaseAnonKey = requirePublicEnv(
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+);
