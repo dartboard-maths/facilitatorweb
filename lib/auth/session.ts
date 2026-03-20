@@ -7,6 +7,9 @@ type MarketplaceSessionPayload = {
   sub: string;
   email: string;
   name: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  moodlePhotoUrl: string | null;
   moodleUserId: string;
   exp: number;
 };
@@ -53,6 +56,9 @@ export async function setMarketplaceSession(input: {
   email: string;
   moodleUserId: string;
   name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  moodlePhotoUrl?: string | null;
   maxAgeSeconds?: number;
 }) {
   const maxAgeSeconds = input.maxAgeSeconds ?? 60 * 60 * 8;
@@ -60,6 +66,9 @@ export async function setMarketplaceSession(input: {
     sub: deterministicUuidFromMoodleId(input.moodleUserId),
     email: input.email.toLowerCase().trim(),
     name: input.name?.trim() || null,
+    firstName: input.firstName?.trim() || null,
+    lastName: input.lastName?.trim() || null,
+    moodlePhotoUrl: input.moodlePhotoUrl?.trim() || null,
     moodleUserId: input.moodleUserId.trim(),
     exp: Math.floor(Date.now() / 1000) + maxAgeSeconds,
   };

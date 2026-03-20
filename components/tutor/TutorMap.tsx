@@ -3,6 +3,7 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import Link from "next/link";
 import { createClient } from "../../lib/supabase/client";
 import styles from "./TutorMap.module.scss";
 
@@ -415,7 +416,12 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
         }`}
       >
         <div className={styles["tutor-map__header"]}>
-          <h2 className={styles["tutor-map__title"]}>Tutors Near You</h2>
+          <div className="d-flex align-items-center gap-2">
+            <Link href="/" className="btn btn-link p-0 text-decoration-none" aria-label="Back to homepage">
+              ←
+            </Link>
+            <h2 className={styles["tutor-map__title"]}>Tutors Near You</h2>
+          </div>
           <p className={styles["tutor-map__subtitle"]}>
             Filter by subject, distance, price, and level.
           </p>
