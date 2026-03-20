@@ -123,7 +123,7 @@ export function TutorProfileForm({ action }: TutorProfileFormProps) {
           />
         </div>
 
-        <div className="col-12 col-md-6">
+        <div className="col-12">
           <label className="form-label" htmlFor="subjects">
             Subjects
           </label>
@@ -138,7 +138,7 @@ export function TutorProfileForm({ action }: TutorProfileFormProps) {
           <div className="form-text">Comma-separated values.</div>
         </div>
 
-        <div className="col-12 col-md-6">
+        <div className="col-12">
           <label className="form-label" htmlFor="levels">
             Levels
           </label>

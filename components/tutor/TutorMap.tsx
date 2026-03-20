@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { createClient } from "../../lib/supabase/client";
@@ -29,6 +29,12 @@ type Coordinates = {
   longitude: number;
 };
 
+type AddressFeature = {
+  id: string;
+  place_name: string;
+  center?: [number, number];
+};
+
 const FALLBACK_COORDINATES: Coordinates = {
   latitude: 37.7749,
   longitude: -122.4194,
@@ -42,6 +48,14 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
 
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [distanceKm, setDistanceKm] = useState<number>(initialRadiusKm);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressFeature[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [isMobilePanelExpanded, setIsMobilePanelExpanded] = useState(false);
+  const [isMobilePanelPinned, setIsMobilePanelPinned] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState("");
   const [maxPriceFilter, setMaxPriceFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
@@ -49,6 +63,7 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
   const [selectedTutor, setSelectedTutor] = useState<TutorSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRecentering, setIsRecentering] = useState(false);
 
   const mapboxToken = useMemo(
     () => process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "",
@@ -115,6 +130,25 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
       return subjectMatches && levelMatches && priceMatches;
     });
   }, [levelFilter, maxPriceFilter, subjectFilter, tutors]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 991.98px)");
+    const handleMediaQuery = (event: MediaQueryListEvent | MediaQueryList) => {
+      const matches = "matches" in event ? event.matches : mediaQuery.matches;
+      setIsMobileViewport(matches);
+      setIsMobilePanelExpanded((prev) => (matches ? prev : true));
+      if (!matches) {
+        setIsMobilePanelPinned(false);
+      }
+    };
+
+    handleMediaQuery(mediaQuery);
+    mediaQuery.addEventListener("change", handleMediaQuery);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMediaQuery);
+    };
+  }, []);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current || !mapboxToken) return;
@@ -231,17 +265,126 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
 
   const handleRecenter = () => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || isRecentering) return;
 
-    const target = userLocation ?? FALLBACK_COORDINATES;
-    map.flyTo({
-      center: [target.longitude, target.latitude],
-      zoom: 12,
-      essential: true,
-    });
+    const moveToTarget = (target: Coordinates) => {
+      map.flyTo({
+        center: [target.longitude, target.latitude],
+        zoom: 12,
+        essential: true,
+      });
+      setUserLocation(target);
+      void loadTutors(target, distanceKm);
+    };
 
-    if (userLocation) {
-      void loadTutors(userLocation, distanceKm);
+    if (!navigator.geolocation) {
+      moveToTarget(userLocation ?? FALLBACK_COORDINATES);
+      return;
+    }
+
+    setIsRecentering(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const liveLocation: Coordinates = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        moveToTarget(liveLocation);
+        setIsRecentering(false);
+      },
+      () => {
+        moveToTarget(userLocation ?? FALLBACK_COORDINATES);
+        setIsRecentering(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  };
+
+  const geocodeAddress = useCallback(
+    async (query: string, limit: number, signal?: AbortSignal): Promise<AddressFeature[]> => {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?limit=${limit}&access_token=${encodeURIComponent(mapboxToken)}`,
+        { signal },
+      );
+
+      if (!response.ok) {
+        throw new Error("Address search failed.");
+      }
+
+      const data = (await response.json()) as {
+        features?: AddressFeature[];
+      };
+
+      return data.features ?? [];
+    },
+    [mapboxToken],
+  );
+
+  useEffect(() => {
+    const query = addressQuery.trim();
+    if (!query || !mapboxToken) {
+      setAddressSuggestions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const suggestions = await geocodeAddress(query, 5, controller.signal);
+        setAddressSuggestions(suggestions);
+        setShowSuggestions(true);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setAddressSuggestions([]);
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [addressQuery, geocodeAddress, mapboxToken]);
+
+  const applyAddressFeature = (feature: AddressFeature) => {
+    const center = feature.center;
+    if (!center || center.length < 2) return;
+
+    const [longitude, latitude] = center;
+    setAddressQuery(feature.place_name);
+    setAddressSuggestions([]);
+    setShowSuggestions(false);
+    setAddressError(null);
+    setUserLocation({ latitude, longitude });
+  };
+
+  const handleAddressSearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const query = addressQuery.trim();
+    if (!query) return;
+    if (!mapboxToken) {
+      setAddressError("Missing map token for address search.");
+      return;
+    }
+
+    try {
+      setIsGeocoding(true);
+      setAddressError(null);
+
+      const selectedFeature = addressSuggestions[0]
+        ? addressSuggestions[0]
+        : (await geocodeAddress(query, 1))[0];
+
+      if (!selectedFeature?.center || selectedFeature.center.length < 2) {
+        throw new Error("No matching address found.");
+      }
+      applyAddressFeature(selectedFeature);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Could not search this address.";
+      setAddressError(message);
+    } finally {
+      setIsGeocoding(false);
     }
   };
 
@@ -257,13 +400,20 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
 
       <button
         type="button"
-        className={`${styles["tutor-map__recenter-btn"]} btn btn-sm btn-light`}
+        className={`${styles["tutor-map__recenter-btn"]} ${styles["tutor-map__recenter-btn--desktop"]} btn btn-sm btn-light`}
         onClick={handleRecenter}
+        disabled={isRecentering}
       >
-        Recenter
+        {isRecentering ? "Centering..." : "Recenter"}
       </button>
 
-      <div className={styles["tutor-map__panel"]}>
+      <div
+        className={`${styles["tutor-map__panel"]} ${
+          isMobileViewport && !isMobilePanelExpanded
+            ? styles["tutor-map__panel--collapsed"]
+            : ""
+        }`}
+      >
         <div className={styles["tutor-map__header"]}>
           <h2 className={styles["tutor-map__title"]}>Tutors Near You</h2>
           <p className={styles["tutor-map__subtitle"]}>
@@ -273,105 +423,191 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
 
         <div className="row g-2">
           <div className="col-12">
-            <label htmlFor="subject" className="form-label mb-1">
-              Subject
+            <label htmlFor="address-search" className="form-label mb-1">
+              Address
             </label>
-            <input
-              id="subject"
-              className="form-control"
-              value={subjectFilter}
-              onChange={(event) => setSubjectFilter(event.target.value)}
-              placeholder="e.g. Math"
-            />
+            <form className="d-flex gap-2" onSubmit={handleAddressSearch}>
+              <input
+                id="address-search"
+                className="form-control"
+                value={addressQuery}
+                onChange={(event) => {
+                  setAddressQuery(event.target.value);
+                  setAddressError(null);
+                }}
+                onFocus={() => {
+                  setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  if (!isMobileViewport || isMobilePanelPinned) return;
+                  window.setTimeout(() => {
+                    setIsMobilePanelExpanded(false);
+                    setShowSuggestions(false);
+                  }, 120);
+                }}
+                placeholder="Search address or suburb"
+              />
+              <button className="btn btn-primary" type="submit" disabled={isGeocoding}>
+                {isGeocoding ? "..." : "Go"}
+              </button>
+            </form>
+            {isMobileViewport && (
+              <div className={styles["tutor-map__mobile-actions"]}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => {
+                    setIsMobilePanelPinned((prev) => {
+                      const nextPinned = !prev;
+                      setIsMobilePanelExpanded(nextPinned);
+                      return nextPinned;
+                    });
+                  }}
+                >
+                  {isMobilePanelPinned ? "Hide filters" : "Show filters"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-light"
+                  onClick={handleRecenter}
+                  disabled={isRecentering}
+                >
+                  {isRecentering ? "Centering..." : "Recenter"}
+                </button>
+              </div>
+            )}
+            {showSuggestions && addressSuggestions.length > 0 && (
+              <div className={styles["tutor-map__suggestions"]} role="listbox">
+                {addressSuggestions.map((feature) => (
+                  <button
+                    key={feature.id}
+                    type="button"
+                    className={styles["tutor-map__suggestion-item"]}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                    }}
+                    onClick={() => applyAddressFeature(feature)}
+                  >
+                    {feature.place_name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {addressError && (
+              <div className="text-danger small mt-1" role="alert">
+                {addressError}
+              </div>
+            )}
           </div>
 
-          <div className="col-6">
-            <label htmlFor="distance" className="form-label mb-1">
-              Distance
-            </label>
-            <select
-              id="distance"
-              className="form-select"
-              value={distanceKm}
-              onChange={(event) => setDistanceKm(Number(event.target.value))}
-            >
-              <option value={5}>5 km</option>
-              <option value={10}>10 km</option>
-              <option value={20}>20 km</option>
-              <option value={50}>50 km</option>
-              <option value={100}>100 km</option>
-            </select>
-          </div>
+          {(isMobilePanelExpanded || !isMobileViewport) && (
+            <>
+              <div className="col-12">
+                <label htmlFor="subject" className="form-label mb-1">
+                  Subject
+                </label>
+                <input
+                  id="subject"
+                  className="form-control"
+                  value={subjectFilter}
+                  onChange={(event) => setSubjectFilter(event.target.value)}
+                  placeholder="e.g. Math"
+                />
+              </div>
 
-          <div className="col-6">
-            <label htmlFor="price" className="form-label mb-1">
-              Max price
-            </label>
-            <input
-              id="price"
-              type="number"
-              min="0"
-              step="1"
-              className="form-control"
-              value={maxPriceFilter}
-              onChange={(event) => setMaxPriceFilter(event.target.value)}
-              placeholder="Any"
-            />
-          </div>
+              <div className="col-6">
+                <label htmlFor="distance" className="form-label mb-1">
+                  Distance
+                </label>
+                <select
+                  id="distance"
+                  className="form-select"
+                  value={distanceKm}
+                  onChange={(event) => setDistanceKm(Number(event.target.value))}
+                >
+                  <option value={5}>5 km</option>
+                  <option value={10}>10 km</option>
+                  <option value={20}>20 km</option>
+                  <option value={50}>50 km</option>
+                  <option value={100}>100 km</option>
+                </select>
+              </div>
 
-          <div className="col-12">
-            <label htmlFor="level" className="form-label mb-1">
-              Level
-            </label>
-            <select
-              id="level"
-              className="form-select"
-              value={levelFilter}
-              onChange={(event) => setLevelFilter(event.target.value)}
-            >
-              <option value="">All levels</option>
-              {levelOptions.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+              <div className="col-6">
+                <label htmlFor="price" className="form-label mb-1">
+                  Max price
+                </label>
+                <input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="form-control"
+                  value={maxPriceFilter}
+                  onChange={(event) => setMaxPriceFilter(event.target.value)}
+                  placeholder="Any"
+                />
+              </div>
 
-        <div className={styles["tutor-map__status"]}>
-          {isLoading && <span>Loading tutors...</span>}
-          {!isLoading && !error && <span>{filteredTutors.length} tutors found.</span>}
-          {error && (
-            <span className="text-danger" role="alert">
-              {error}
-            </span>
+              <div className="col-12">
+                <label htmlFor="level" className="form-label mb-1">
+                  Level
+                </label>
+                <select
+                  id="level"
+                  className="form-select"
+                  value={levelFilter}
+                  onChange={(event) => setLevelFilter(event.target.value)}
+                >
+                  <option value="">All levels</option>
+                  {levelOptions.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
           )}
         </div>
 
-        <div className={styles["tutor-map__list"]}>
-          {!isLoading &&
-            filteredTutors.map((tutor) => (
-              <button
-                key={tutor.tutor_id}
-                type="button"
-                className={`${styles["tutor-map__list-item"]} ${
-                  selectedTutor?.tutor_id === tutor.tutor_id
-                    ? styles["tutor-map__list-item--active"]
-                    : ""
-                }`}
-                onClick={() => handleTutorSelect(tutor)}
-              >
-                <div className={styles["tutor-map__list-row"]}>
-                  <h3 className="h6 mb-1">{tutor.name}</h3>
-                  <span className="badge text-bg-light">{tutor.distance_km.toFixed(1)} km</span>
-                </div>
-                <p className="mb-1 text-secondary">${tutor.hourly_rate}/hr</p>
-                <p className="mb-1 small text-secondary">{tutor.subjects.join(", ")}</p>
-                <p className="mb-0 small">{tutor.levels.join(", ")}</p>
-              </button>
-            ))}
-        </div>
+        {(isMobilePanelExpanded || !isMobileViewport) && (
+          <>
+            <div className={styles["tutor-map__status"]}>
+              {isLoading && <span>Loading tutors...</span>}
+              {!isLoading && !error && <span>{filteredTutors.length} tutors found.</span>}
+              {error && (
+                <span className="text-danger" role="alert">
+                  {error}
+                </span>
+              )}
+            </div>
+
+            <div className={styles["tutor-map__list"]}>
+              {!isLoading &&
+                filteredTutors.map((tutor) => (
+                  <button
+                    key={tutor.tutor_id}
+                    type="button"
+                    className={`${styles["tutor-map__list-item"]} ${
+                      selectedTutor?.tutor_id === tutor.tutor_id
+                        ? styles["tutor-map__list-item--active"]
+                        : ""
+                    }`}
+                    onClick={() => handleTutorSelect(tutor)}
+                  >
+                    <div className={styles["tutor-map__list-row"]}>
+                      <h3 className="h6 mb-1">{tutor.name}</h3>
+                      <span className="badge text-bg-light">{tutor.distance_km.toFixed(1)} km</span>
+                    </div>
+                    <p className="mb-1 text-secondary">${tutor.hourly_rate}/hr</p>
+                    <p className="mb-1 small text-secondary">{tutor.subjects.join(", ")}</p>
+                    <p className="mb-0 small">{tutor.levels.join(", ")}</p>
+                  </button>
+                ))}
+            </div>
+          </>
+        )}
       </div>
 
       {selectedTutor && (
