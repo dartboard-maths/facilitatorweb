@@ -1,0 +1,111 @@
+import crypto from "node:crypto";
+import { cookies } from "next/headers";
+
+const SESSION_COOKIE_NAME = "marketplace_session";
+
+type MarketplaceSessionPayload = {
+  sub: string;
+  email: string;
+  name: string | null;
+  moodleUserId: string;
+  exp: number;
+};
+
+function requireServerEnv(value: string | undefined, name: string): string {
+  if (!value) {
+    throw new Error(`Missing ${name}`);
+  }
+  return value;
+}
+
+function base64urlEncode(value: string): string {
+  return Buffer.from(value, "utf8").toString("base64url");
+}
+
+function base64urlDecode(value: string): string {
+  return Buffer.from(value, "base64url").toString("utf8");
+}
+
+function sign(value: string): string {
+  const secret = requireServerEnv(
+    process.env.MARKETPLACE_SESSION_SECRET,
+    "MARKETPLACE_SESSION_SECRET",
+  );
+  return crypto.createHmac("sha256", secret).update(value).digest("hex");
+}
+
+export function deterministicUuidFromMoodleId(moodleUserId: string): string {
+  const hash = crypto
+    .createHash("sha256")
+    .update(`moodle-user:${moodleUserId}`)
+    .digest("hex")
+    .slice(0, 32);
+
+  const chars = hash.split("");
+  chars[12] = "4";
+  chars[16] = ((parseInt(chars[16], 16) & 0x3) | 0x8).toString(16);
+  const normalized = chars.join("");
+
+  return `${normalized.slice(0, 8)}-${normalized.slice(8, 12)}-${normalized.slice(12, 16)}-${normalized.slice(16, 20)}-${normalized.slice(20, 32)}`;
+}
+
+export async function setMarketplaceSession(input: {
+  email: string;
+  moodleUserId: string;
+  name?: string | null;
+  maxAgeSeconds?: number;
+}) {
+  const maxAgeSeconds = input.maxAgeSeconds ?? 60 * 60 * 8;
+  const payload: MarketplaceSessionPayload = {
+    sub: deterministicUuidFromMoodleId(input.moodleUserId),
+    email: input.email.toLowerCase().trim(),
+    name: input.name?.trim() || null,
+    moodleUserId: input.moodleUserId.trim(),
+    exp: Math.floor(Date.now() / 1000) + maxAgeSeconds,
+  };
+
+  const encoded = base64urlEncode(JSON.stringify(payload));
+  const signature = sign(encoded);
+
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, `${encoded}.${signature}`, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: maxAgeSeconds,
+  });
+}
+
+export async function clearMarketplaceSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+export async function getMarketplaceSession(): Promise<MarketplaceSessionPayload | null> {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  if (!raw) return null;
+
+  const [encoded, signature] = raw.split(".");
+  if (!encoded || !signature) return null;
+
+  const expected = sign(encoded);
+  const sigA = Buffer.from(signature, "hex");
+  const sigB = Buffer.from(expected, "hex");
+  if (sigA.length !== sigB.length) return null;
+  if (!crypto.timingSafeEqual(sigA, sigB)) return null;
+
+  try {
+    const payload = JSON.parse(base64urlDecode(encoded)) as MarketplaceSessionPayload;
+    if (!payload?.sub || !payload?.email || !payload?.moodleUserId || !payload?.exp) {
+      return null;
+    }
+    if (payload.exp <= Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}

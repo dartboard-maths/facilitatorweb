@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "../../../lib/supabase/server";
+import { getMarketplaceSession } from "../../../lib/auth/session";
+import { createAdminClient } from "../../../lib/supabase/admin";
 
 export type TutorProfileFormState = {
   error?: string;
@@ -20,15 +21,13 @@ export async function createTutorProfile(
   _prevState: TutorProfileFormState,
   formData: FormData,
 ): Promise<TutorProfileFormState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const session = await getMarketplaceSession();
 
-  if (authError || !user) {
-    return { error: "You must be signed in to create a tutor profile." };
+  if (!session) {
+    return { error: "You must be signed in with Moodle to create a tutor profile." };
   }
+
+  const supabase = createAdminClient();
 
   const name = String(formData.get("name") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
@@ -63,12 +62,10 @@ export async function createTutorProfile(
   }
 
   const { error: userUpsertError } = await supabase.from("users").upsert({
-    id: user.id,
-    email: user.email ?? null,
-    full_name:
-      (user.user_metadata?.full_name as string | undefined) ??
-      (user.user_metadata?.name as string | undefined) ??
-      null,
+    id: session.sub,
+    email: session.email,
+    full_name: session.name,
+    moodle_user_id: session.moodleUserId,
   });
 
   if (userUpsertError) {
@@ -76,7 +73,7 @@ export async function createTutorProfile(
   }
 
   const { error } = await supabase.rpc("create_tutor_profile", {
-    p_user_id: user.id,
+    p_user_id: session.sub,
     p_name: name,
     p_bio: bio,
     p_subjects: subjects,
