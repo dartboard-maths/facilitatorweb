@@ -120,12 +120,14 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
     if (!mapContainerRef.current || mapRef.current || !mapboxToken) return;
 
     mapboxgl.accessToken = mapboxToken;
-    mapRef.current = new mapboxgl.Map({
+    const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
       center: [FALLBACK_COORDINATES.longitude, FALLBACK_COORDINATES.latitude],
       zoom: 10,
     });
+    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    mapRef.current = map;
 
     return () => {
       tutorMarkersRef.current.forEach((marker) => marker.remove());
@@ -227,6 +229,22 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
     });
   };
 
+  const handleRecenter = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const target = userLocation ?? FALLBACK_COORDINATES;
+    map.flyTo({
+      center: [target.longitude, target.latitude],
+      zoom: 12,
+      essential: true,
+    });
+
+    if (userLocation) {
+      void loadTutors(userLocation, distanceKm);
+    }
+  };
+
   return (
     <section className={styles["tutor-map"]}>
       {!mapboxToken && (
@@ -236,6 +254,14 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
       )}
 
       <div ref={mapContainerRef} className={styles["tutor-map__canvas"]} />
+
+      <button
+        type="button"
+        className={`${styles["tutor-map__recenter-btn"]} btn btn-sm btn-light`}
+        onClick={handleRecenter}
+      >
+        Recenter
+      </button>
 
       <div className={styles["tutor-map__panel"]}>
         <div className={styles["tutor-map__header"]}>
