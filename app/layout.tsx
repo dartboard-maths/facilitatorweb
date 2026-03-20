@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.scss";
 
 export const metadata: Metadata = {
-  title: "Tutor Marketplace",
-  description: "Create tutor profiles with geolocation.",
+  title: "Edu Placement",
+  description: "Edu Placement tutor marketplace.",
 };
 
 export default function RootLayout({
