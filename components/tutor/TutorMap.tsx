@@ -229,134 +229,122 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
 
   return (
     <section className={styles["tutor-map"]}>
-      <div className={styles["tutor-map__header"]}>
-        <h2 className={styles["tutor-map__title"]}>Tutors Near You</h2>
-        <p className={styles["tutor-map__subtitle"]}>
-          Filter by subject, distance, price, and level.
-        </p>
-      </div>
+      {!mapboxToken && (
+        <div className={`${styles["tutor-map__token-warning"]} alert alert-warning`} role="alert">
+          Missing NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment.
+        </div>
+      )}
 
-      <div className="row g-3">
-        <div className="col-12 col-lg-5 col-xl-4">
-          <div className={styles["tutor-map__panel"]}>
-            <div className="row g-2">
-              <div className="col-12">
-                <label htmlFor="subject" className="form-label mb-1">
-                  Subject
-                </label>
-                <input
-                  id="subject"
-                  className="form-control"
-                  value={subjectFilter}
-                  onChange={(event) => setSubjectFilter(event.target.value)}
-                  placeholder="e.g. Math"
-                />
-              </div>
+      <div ref={mapContainerRef} className={styles["tutor-map__canvas"]} />
 
-              <div className="col-12 col-md-6 col-lg-12">
-                <label htmlFor="distance" className="form-label mb-1">
-                  Distance
-                </label>
-                <select
-                  id="distance"
-                  className="form-select"
-                  value={distanceKm}
-                  onChange={(event) => setDistanceKm(Number(event.target.value))}
-                >
-                  <option value={5}>5 km</option>
-                  <option value={10}>10 km</option>
-                  <option value={20}>20 km</option>
-                  <option value={50}>50 km</option>
-                  <option value={100}>100 km</option>
-                </select>
-              </div>
+      <div className={styles["tutor-map__panel"]}>
+        <div className={styles["tutor-map__header"]}>
+          <h2 className={styles["tutor-map__title"]}>Tutors Near You</h2>
+          <p className={styles["tutor-map__subtitle"]}>
+            Filter by subject, distance, price, and level.
+          </p>
+        </div>
 
-              <div className="col-12 col-md-6 col-lg-12">
-                <label htmlFor="price" className="form-label mb-1">
-                  Price (max hourly)
-                </label>
-                <input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="1"
-                  className="form-control"
-                  value={maxPriceFilter}
-                  onChange={(event) => setMaxPriceFilter(event.target.value)}
-                  placeholder="Any"
-                />
-              </div>
+        <div className="row g-2">
+          <div className="col-12">
+            <label htmlFor="subject" className="form-label mb-1">
+              Subject
+            </label>
+            <input
+              id="subject"
+              className="form-control"
+              value={subjectFilter}
+              onChange={(event) => setSubjectFilter(event.target.value)}
+              placeholder="e.g. Math"
+            />
+          </div>
 
-              <div className="col-12">
-                <label htmlFor="level" className="form-label mb-1">
-                  Level
-                </label>
-                <select
-                  id="level"
-                  className="form-select"
-                  value={levelFilter}
-                  onChange={(event) => setLevelFilter(event.target.value)}
-                >
-                  <option value="">All levels</option>
-                  {levelOptions.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          <div className="col-6">
+            <label htmlFor="distance" className="form-label mb-1">
+              Distance
+            </label>
+            <select
+              id="distance"
+              className="form-select"
+              value={distanceKm}
+              onChange={(event) => setDistanceKm(Number(event.target.value))}
+            >
+              <option value={5}>5 km</option>
+              <option value={10}>10 km</option>
+              <option value={20}>20 km</option>
+              <option value={50}>50 km</option>
+              <option value={100}>100 km</option>
+            </select>
+          </div>
 
-            <div className={styles["tutor-map__status"]}>
-              {isLoading && <span>Loading tutors...</span>}
-              {!isLoading && !error && (
-                <span>{filteredTutors.length} tutors found.</span>
-              )}
-              {error && (
-                <span className="text-danger" role="alert">
-                  {error}
-                </span>
-              )}
-            </div>
+          <div className="col-6">
+            <label htmlFor="price" className="form-label mb-1">
+              Max price
+            </label>
+            <input
+              id="price"
+              type="number"
+              min="0"
+              step="1"
+              className="form-control"
+              value={maxPriceFilter}
+              onChange={(event) => setMaxPriceFilter(event.target.value)}
+              placeholder="Any"
+            />
+          </div>
 
-            <div className={styles["tutor-map__list"]}>
-              {!isLoading &&
-                filteredTutors.map((tutor) => (
-                  <button
-                    key={tutor.tutor_id}
-                    type="button"
-                    className={`${styles["tutor-map__list-item"]} ${
-                      selectedTutor?.tutor_id === tutor.tutor_id
-                        ? styles["tutor-map__list-item--active"]
-                        : ""
-                    }`}
-                    onClick={() => handleTutorSelect(tutor)}
-                  >
-                    <div className={styles["tutor-map__list-row"]}>
-                      <h3 className="h6 mb-1">{tutor.name}</h3>
-                      <span className="badge text-bg-light">
-                        {tutor.distance_km.toFixed(1)} km
-                      </span>
-                    </div>
-                    <p className="mb-1 text-secondary">${tutor.hourly_rate}/hr</p>
-                    <p className="mb-1 small text-secondary">
-                      {tutor.subjects.join(", ")}
-                    </p>
-                    <p className="mb-0 small">{tutor.levels.join(", ")}</p>
-                  </button>
-                ))}
-            </div>
+          <div className="col-12">
+            <label htmlFor="level" className="form-label mb-1">
+              Level
+            </label>
+            <select
+              id="level"
+              className="form-select"
+              value={levelFilter}
+              onChange={(event) => setLevelFilter(event.target.value)}
+            >
+              <option value="">All levels</option>
+              {levelOptions.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <div className="col-12 col-lg-7 col-xl-8">
-          {!mapboxToken && (
-            <div className="alert alert-warning" role="alert">
-              Missing NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment.
-            </div>
+        <div className={styles["tutor-map__status"]}>
+          {isLoading && <span>Loading tutors...</span>}
+          {!isLoading && !error && <span>{filteredTutors.length} tutors found.</span>}
+          {error && (
+            <span className="text-danger" role="alert">
+              {error}
+            </span>
           )}
+        </div>
 
-          <div ref={mapContainerRef} className={styles["tutor-map__canvas"]} />
+        <div className={styles["tutor-map__list"]}>
+          {!isLoading &&
+            filteredTutors.map((tutor) => (
+              <button
+                key={tutor.tutor_id}
+                type="button"
+                className={`${styles["tutor-map__list-item"]} ${
+                  selectedTutor?.tutor_id === tutor.tutor_id
+                    ? styles["tutor-map__list-item--active"]
+                    : ""
+                }`}
+                onClick={() => handleTutorSelect(tutor)}
+              >
+                <div className={styles["tutor-map__list-row"]}>
+                  <h3 className="h6 mb-1">{tutor.name}</h3>
+                  <span className="badge text-bg-light">{tutor.distance_km.toFixed(1)} km</span>
+                </div>
+                <p className="mb-1 text-secondary">${tutor.hourly_rate}/hr</p>
+                <p className="mb-1 small text-secondary">{tutor.subjects.join(", ")}</p>
+                <p className="mb-0 small">{tutor.levels.join(", ")}</p>
+              </button>
+            ))}
         </div>
       </div>
 
