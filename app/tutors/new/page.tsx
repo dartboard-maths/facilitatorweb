@@ -1,7 +1,14 @@
 import { createTutorProfile } from "./actions";
 import { TutorProfileForm } from "../../../components/tutor/TutorProfileForm";
+import { getMarketplaceSession } from "../../../lib/auth/session";
+import { redirect } from "next/navigation";
 
-export default function NewTutorProfilePage() {
+export default async function NewTutorProfilePage() {
+  const session = await getMarketplaceSession();
+  if (!session) {
+    redirect("/sign-in?next=/tutors/new");
+  }
+
   return (
     <main className="container py-5">
       <div className="row justify-content-center">
