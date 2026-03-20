@@ -101,6 +101,21 @@ with generated_tutors as (
     select 24, 50::double precision
     union all
     select 25, 100::double precision
+    union all
+    select
+      25 + ((band.band_idx - 1) * 10) + band.sample_idx as idx,
+      case band.band_idx
+        when 1 then 5::double precision
+        when 2 then 10::double precision
+        when 3 then 20::double precision
+        when 4 then 50::double precision
+        else 100::double precision
+      end as ring_km
+    from (
+      select band_idx, sample_idx
+      from generate_series(1, 5) as band_idx
+      cross join generate_series(1, 10) as sample_idx
+    ) as band
   ) as s
 )
 insert into public.users (id, email, full_name)
@@ -207,6 +222,21 @@ with generated_tutors as (
     select 24, 50::double precision
     union all
     select 25, 100::double precision
+    union all
+    select
+      25 + ((band.band_idx - 1) * 10) + band.sample_idx as idx,
+      case band.band_idx
+        when 1 then 5::double precision
+        when 2 then 10::double precision
+        when 3 then 20::double precision
+        when 4 then 50::double precision
+        else 100::double precision
+      end as ring_km
+    from (
+      select band_idx, sample_idx
+      from generate_series(1, 5) as band_idx
+      cross join generate_series(1, 10) as sample_idx
+    ) as band
   ) as s
 )
 insert into public.tutors (

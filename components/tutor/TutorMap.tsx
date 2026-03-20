@@ -41,6 +41,14 @@ const FALLBACK_COORDINATES: Coordinates = {
   longitude: -122.4194,
 };
 
+function zoomForDistanceKm(distanceKm: number): number {
+  if (distanceKm <= 5) return 13;
+  if (distanceKm <= 10) return 12;
+  if (distanceKm <= 20) return 11;
+  if (distanceKm <= 50) return 10;
+  return 9;
+}
+
 export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -194,6 +202,14 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
 
   useEffect(() => {
     if (!userLocation) return;
+    const map = mapRef.current;
+    if (map) {
+      map.flyTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: zoomForDistanceKm(distanceKm),
+        essential: true,
+      });
+    }
     void loadTutors(userLocation, distanceKm);
   }, [distanceKm, loadTutors, userLocation]);
 
