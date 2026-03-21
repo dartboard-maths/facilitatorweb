@@ -17,7 +17,7 @@ const errorLabels: Record<string, string> = {
 
 export default function SignInPage({ searchParams }: SignInPageProps) {
   const nextPath =
-    searchParams?.next && searchParams.next.startsWith("/") ? searchParams.next : "/tutors/new";
+    searchParams?.next && searchParams.next.startsWith("/") ? searchParams.next : "/role-select";
   const errorText = searchParams?.error ? errorLabels[searchParams.error] : null;
   const moodleStartUrl = `/api/auth/moodle/start?next=${encodeURIComponent(nextPath)}`;
 
@@ -29,7 +29,7 @@ export default function SignInPage({ searchParams }: SignInPageProps) {
             <div className="card-body p-4">
               <h1 className="h3 mb-2">Sign in to Tutor Marketplace</h1>
               <p className="text-secondary mb-4">
-                Use your Moodle account to securely access your tutor profile.
+                Use your Moodle account to securely access your marketplace roles.
               </p>
 
               {errorText && (

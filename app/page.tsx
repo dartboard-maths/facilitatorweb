@@ -1,7 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getMarketplaceSession } from "../lib/auth/session";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getMarketplaceSession();
+  const roleHomeHref = session ? "/role-select" : "/sign-in";
+  const roleHomeLabel = session ? "Choose role" : "Sign in";
+
   return (
     <main className="container py-5">
       <div className="row justify-content-center">
@@ -25,8 +30,8 @@ export default function HomePage() {
             <Link href="/tutors" className="btn btn-link">
               Tutors
             </Link>
-            <Link href="/sign-in" className="btn btn-outline-primary">
-              Sign in
+            <Link href={roleHomeHref} className="btn btn-outline-primary">
+              {roleHomeLabel}
             </Link>
           </nav>
         </div>

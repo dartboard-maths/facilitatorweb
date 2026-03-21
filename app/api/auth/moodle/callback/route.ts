@@ -41,6 +41,17 @@ function sanitizePhotoUrl(value: string): string | null {
   }
 }
 
+function sanitizeSchoolIdsCsv(value: string): string[] {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((item) => item.trim().toUpperCase())
+    .filter((item) => /^[A-Z0-9_-]+$/.test(item));
+}
+
 export async function GET(request: NextRequest) {
   const email = (request.nextUrl.searchParams.get("email") ?? "").trim().toLowerCase();
   const moodleUserId = (request.nextUrl.searchParams.get("moodle_user_id") ?? "").trim();
@@ -56,6 +67,11 @@ export async function GET(request: NextRequest) {
   ).trim();
   const moodleUsername = (request.nextUrl.searchParams.get("username") ?? "").trim();
   const moodlePhotoUrl = sanitizePhotoUrl(request.nextUrl.searchParams.get("photo_url") ?? "");
+  const isSchoolAdmin = (request.nextUrl.searchParams.get("dbm_is_school_admin") ?? "0").trim() === "1";
+  const managedSchoolIds = sanitizeSchoolIdsCsv(
+    request.nextUrl.searchParams.get("dbm_school_ids") ?? "",
+  );
+  const managedSchoolIdsCsv = managedSchoolIds.join(",");
   const signature = (request.nextUrl.searchParams.get("sig") ?? "").trim();
   const timestamp = Number(request.nextUrl.searchParams.get("ts") ?? "0");
   const name = (request.nextUrl.searchParams.get("name") ?? "").trim() || null;
@@ -79,6 +95,8 @@ export async function GET(request: NextRequest) {
     moodleUserId,
     timestamp,
     nextPath,
+    isSchoolAdmin,
+    managedSchoolIdsCsv,
     signature,
   });
 
@@ -94,14 +112,38 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in?error=missing_service_role_key", request.nextUrl.origin));
   }
 
-  const { error: userUpsertError } = await admin.from("users").upsert({
+  const primaryUserPayload = {
     id: userId,
     email,
     full_name: preferredName,
     first_name: firstName || null,
     last_name: lastName || null,
+    is_school_admin: isSchoolAdmin,
+    managed_school_ids: managedSchoolIds,
     moodle_user_id: moodleUserId,
-  });
+  };
+
+  let { error: userUpsertError } = await admin.from("users").upsert(primaryUserPayload);
+
+  // Backward-compatible fallback for environments where school-admin columns
+  // have not yet been migrated (is_school_admin / managed_school_ids).
+  if (
+    userUpsertError &&
+    (
+      /is_school_admin/i.test(userUpsertError.message) ||
+      /managed_school_ids/i.test(userUpsertError.message)
+    )
+  ) {
+    const { error: fallbackUpsertError } = await admin.from("users").upsert({
+      id: userId,
+      email,
+      full_name: preferredName,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      moodle_user_id: moodleUserId,
+    });
+    userUpsertError = fallbackUpsertError ?? null;
+  }
 
   if (userUpsertError) {
     return NextResponse.redirect(new URL("/sign-in?error=profile_sync_failed", request.nextUrl.origin));
@@ -114,6 +156,8 @@ export async function GET(request: NextRequest) {
     firstName: firstName || null,
     lastName: lastName || null,
     moodlePhotoUrl,
+    isSchoolAdmin,
+    managedSchoolIds,
   });
 
   return NextResponse.redirect(new URL(nextPath, request.nextUrl.origin));

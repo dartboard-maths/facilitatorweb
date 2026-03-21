@@ -16,19 +16,33 @@ export function verifyMoodleSsoSignature(input: {
   moodleUserId: string;
   timestamp: number;
   nextPath: string;
+  isSchoolAdmin: boolean;
+  managedSchoolIdsCsv: string;
   signature: string;
 }): boolean {
   const secret = requireServerEnv(
     process.env.MOODLE_SSO_SHARED_SECRET,
     "MOODLE_SSO_SHARED_SECRET",
   ).trim();
-  const signedData = `${input.email.toLowerCase().trim()}|${input.moodleUserId.trim()}|${input.timestamp}|${decodeURIComponent(input.nextPath)}`;
-  const expected = crypto.createHmac("sha256", secret).update(signedData).digest("hex");
+  const nextPath = decodeURIComponent(input.nextPath);
+  const normalizedEmail = input.email.toLowerCase().trim();
+  const normalizedUserId = input.moodleUserId.trim();
+
+  // Accept both the new payload format (with school-admin claims) and
+  // the legacy format to keep SSO working during staggered deployments.
+  const payloadCandidates = [
+    `${normalizedEmail}|${normalizedUserId}|${input.timestamp}|${nextPath}|${input.isSchoolAdmin ? 1 : 0}|${input.managedSchoolIdsCsv}`,
+    `${normalizedEmail}|${normalizedUserId}|${input.timestamp}|${nextPath}`,
+  ];
 
   const sigA = Buffer.from(input.signature, "hex");
-  const sigB = Buffer.from(expected, "hex");
-  if (sigA.length !== sigB.length) return false;
-  return crypto.timingSafeEqual(sigA, sigB);
+
+  return payloadCandidates.some((candidate) => {
+    const expected = crypto.createHmac("sha256", secret).update(candidate).digest("hex");
+    const sigB = Buffer.from(expected, "hex");
+    if (sigA.length !== sigB.length) return false;
+    return crypto.timingSafeEqual(sigA, sigB);
+  });
 }
 
 export function sanitizeNextPath(value: string | null): string {

@@ -25,6 +25,15 @@ type TutorProfileFormProps = {
   initialTravelRadiusKm?: number | null;
   initialLatitude?: number | null;
   initialLongitude?: number | null;
+  initialWeeklyAvailability?: Array<{
+    weekday: number;
+    startTime: string;
+    endTime: string;
+    recurrenceStartDate?: string;
+    recurrenceEndDate?: string;
+  }>;
+  initialAvailabilityTimezone?: string;
+  initialBlockedDates?: string;
 };
 
 const initialState: TutorProfileFormState = {};
@@ -47,6 +56,23 @@ const LEVEL_OPTIONS = [
   "High School",
   "University",
 ];
+
+const WEEKDAYS = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
+
+function toLocalDateString(value: Date): string {
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, "0");
+  const day = `${value.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -72,6 +98,9 @@ export function TutorProfileForm({
   initialTravelRadiusKm = null,
   initialLatitude = null,
   initialLongitude = null,
+  initialWeeklyAvailability = [],
+  initialAvailabilityTimezone = "UTC",
+  initialBlockedDates = "",
 }: TutorProfileFormProps) {
   const normalizedInitialLng =
     Number.isFinite(initialLongitude) && initialLongitude !== null ? initialLongitude : defaultCenter.lng;
@@ -92,6 +121,9 @@ export function TutorProfileForm({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
+  const [availabilityTimezone, setAvailabilityTimezone] = useState(initialAvailabilityTimezone);
+  const [defaultRecurrenceStartDate, setDefaultRecurrenceStartDate] = useState("");
+  const [defaultRecurrenceEndDate, setDefaultRecurrenceEndDate] = useState("");
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
@@ -99,6 +131,26 @@ export function TutorProfileForm({
     () => process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "",
     [],
   );
+  const availabilityByDay = useMemo(() => {
+    const map = new Map<
+      number,
+      {
+        startTime: string;
+        endTime: string;
+        recurrenceStartDate?: string;
+        recurrenceEndDate?: string;
+      }
+    >();
+    initialWeeklyAvailability.forEach((slot) => {
+      map.set(slot.weekday, {
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        recurrenceStartDate: slot.recurrenceStartDate,
+        recurrenceEndDate: slot.recurrenceEndDate,
+      });
+    });
+    return map;
+  }, [initialWeeklyAvailability]);
   const effectivePhotoUrl = formState.photoUrl ?? initialPhotoUrl ?? moodlePhotoUrl ?? null;
   const headerInitials = useMemo(() => {
     const first = initialFirstName.trim()[0] ?? "";
@@ -108,6 +160,27 @@ export function TutorProfileForm({
     const fromName = initialName.trim()[0] ?? "?";
     return fromName.toUpperCase();
   }, [initialFirstName, initialLastName, initialName]);
+
+  useEffect(() => {
+    const hasSavedAvailability = initialWeeklyAvailability.length > 0;
+    if (hasSavedAvailability) {
+      return;
+    }
+
+    const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (browserTimezone) {
+      setAvailabilityTimezone(browserTimezone);
+    }
+
+    const today = new Date();
+    const startDate = toLocalDateString(today);
+    const endDate = new Date(today);
+    endDate.setMonth(endDate.getMonth() + 3);
+    const endDateString = toLocalDateString(endDate);
+
+    setDefaultRecurrenceStartDate(startDate);
+    setDefaultRecurrenceEndDate(endDateString);
+  }, [initialWeeklyAvailability.length]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current || !mapboxToken) return;
@@ -431,6 +504,108 @@ export function TutorProfileForm({
               ))}
             </div>
           </fieldset>
+        </div>
+
+        <div className="col-12">
+          <fieldset>
+            <legend className="form-label mb-2">Weekly availability</legend>
+            <div className="row g-2 mb-3">
+              <div className="col-12 col-md-6">
+                <label className="form-label" htmlFor="availability_timezone">
+                  Timezone
+                </label>
+                <input
+                  id="availability_timezone"
+                  name="availability_timezone"
+                  className="form-control"
+                  value={availabilityTimezone}
+                  onChange={(event) => setAvailabilityTimezone(event.target.value)}
+                  placeholder="e.g. Africa/Johannesburg"
+                />
+              </div>
+              <div className="col-12">
+                <div className="small text-secondary">
+                  Select days and provide time plus recurrence start/end dates for each day.
+                </div>
+              </div>
+            </div>
+            <div className="row g-2">
+              {WEEKDAYS.map((day) => {
+                const initialDay = availabilityByDay.get(day.value);
+                return (
+                  <div className="col-12" key={day.value}>
+                    <div className="row g-2 align-items-center">
+                      <div className="col-12 col-md-2">
+                        <div className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={`availability-day-${day.value}`}
+                            name={`availability_day_${day.value}_enabled`}
+                            defaultChecked={Boolean(initialDay)}
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor={`availability-day-${day.value}`}
+                          >
+                            {day.label}
+                          </label>
+                        </div>
+                      </div>
+                      <div className="col-6 col-md-2">
+                        <input
+                          type="time"
+                          className="form-control"
+                          name={`availability_day_${day.value}_start`}
+                          defaultValue={initialDay?.startTime ?? "15:00"}
+                        />
+                      </div>
+                      <div className="col-6 col-md-2">
+                        <input
+                          type="time"
+                          className="form-control"
+                          name={`availability_day_${day.value}_end`}
+                          defaultValue={initialDay?.endTime ?? "17:00"}
+                        />
+                      </div>
+                      <div className="col-6 col-md-3">
+                        <input
+                          type="date"
+                          className="form-control"
+                          name={`availability_day_${day.value}_start_date`}
+                          defaultValue={initialDay?.recurrenceStartDate ?? defaultRecurrenceStartDate}
+                        />
+                      </div>
+                      <div className="col-6 col-md-3">
+                        <input
+                          type="date"
+                          className="form-control"
+                          name={`availability_day_${day.value}_end_date`}
+                          defaultValue={initialDay?.recurrenceEndDate ?? defaultRecurrenceEndDate}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </fieldset>
+        </div>
+
+        <div className="col-12">
+          <label className="form-label" htmlFor="blocked_dates">
+            Unavailable dates
+          </label>
+          <input
+            id="blocked_dates"
+            name="blocked_dates"
+            className="form-control"
+            defaultValue={initialBlockedDates}
+            placeholder="YYYY-MM-DD, YYYY-MM-DD"
+          />
+          <div className="form-text">
+            Optional comma-separated blocked dates. Example: 2026-05-01, 2026-05-15
+          </div>
         </div>
 
         <div className="col-12 col-md-6">

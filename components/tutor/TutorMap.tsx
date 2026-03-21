@@ -9,6 +9,7 @@ import styles from "./TutorMap.module.scss";
 
 type TutorMapProps = {
   initialRadiusKm?: number;
+  canBook?: boolean;
 };
 
 type TutorSearchResult = {
@@ -23,6 +24,7 @@ type TutorSearchResult = {
   distance_km: number;
   latitude: number;
   longitude: number;
+  has_active_slots: boolean;
 };
 
 type Coordinates = {
@@ -49,7 +51,7 @@ function zoomForDistanceKm(distanceKm: number): number {
   return 9;
 }
 
-export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
+export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const tutorMarkersRef = useRef<mapboxgl.Marker[]>([]);
@@ -99,7 +101,11 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
           throw queryError;
         }
 
-        setTutors((data ?? []) as TutorSearchResult[]);
+        const normalizedRows = ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+          ...(row as unknown as TutorSearchResult),
+          has_active_slots: row.has_active_slots === undefined ? true : Boolean(row.has_active_slots),
+        }));
+        setTutors(normalizedRows);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load tutors.";
         setError(message);
@@ -245,6 +251,12 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
     filteredTutors.forEach((tutor) => {
       const markerEl = document.createElement("button");
       markerEl.className = styles["tutor-map__tutor-marker"];
+      if (!tutor.has_active_slots) {
+        markerEl.classList.add(styles["tutor-map__tutor-marker--inactive"]);
+      }
+      if (selectedTutor?.tutor_id === tutor.tutor_id) {
+        markerEl.classList.add(styles["tutor-map__tutor-marker--selected"]);
+      }
       markerEl.type = "button";
       markerEl.setAttribute("aria-label", `Open ${tutor.name} profile`);
       markerEl.addEventListener("click", () => {
@@ -257,7 +269,7 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
 
       tutorMarkersRef.current.push(marker);
     });
-  }, [filteredTutors]);
+  }, [filteredTutors, selectedTutor]);
 
   useEffect(() => {
     if (!selectedTutor) return;
@@ -624,7 +636,10 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
                     </div>
                     <p className="mb-1 text-secondary">${tutor.hourly_rate}/hr</p>
                     <p className="mb-1 small text-secondary">{tutor.subjects.join(", ")}</p>
-                    <p className="mb-0 small">{tutor.levels.join(", ")}</p>
+                    <p className="mb-1 small">{tutor.levels.join(", ")}</p>
+                    {!tutor.has_active_slots && (
+                      <p className="mb-0 small text-secondary">No active booking slots</p>
+                    )}
                   </button>
                 ))}
             </div>
@@ -659,6 +674,21 @@ export function TutorMap({ initialRadiusKm = 20 }: TutorMapProps) {
             <p className="mb-0">
               <strong>Rate:</strong> ${selectedTutor.hourly_rate}/hr
             </p>
+            {canBook && selectedTutor.has_active_slots && (
+              <div className="mt-3">
+                <Link
+                  href={`/bookings/new?tutorId=${encodeURIComponent(selectedTutor.tutor_id)}`}
+                  className="btn btn-primary btn-sm"
+                >
+                  Book tutor
+                </Link>
+              </div>
+            )}
+            {canBook && !selectedTutor.has_active_slots && (
+              <div className="mt-3 small text-secondary">
+                No active booking slots available for this tutor right now.
+              </div>
+            )}
           </div>
         </article>
       )}
