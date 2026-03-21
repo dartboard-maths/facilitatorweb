@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getMarketplaceSession } from "../../../lib/auth/session";
 import { createAdminClient } from "../../../lib/supabase/admin";
+import {
+  schoolCatalogRowToLocationData,
+  schoolLocationToSnapshotPayload,
+} from "../../../lib/schools/school-location";
 
 export type BookingFormState = {
   error?: string;
@@ -249,21 +253,58 @@ export async function createBookingRequest(
     return { error: "One or more requested sessions overlap an existing booking." };
   }
 
-  const { data: bookingRow, error: bookingInsertError } = await supabase
-    .from("bookings")
-    .insert({
-      school_admin_user_id: session.sub,
-      tutor_user_id: tutorUserId,
-      school_id: schoolId,
-      booking_type: bookingType,
-      requested_timezone: timezone,
-      notes: notes || null,
-      programme_start_date: programmeStartDate,
-      programme_end_date: programmeEndDate,
-      status: "pending",
-    })
-    .select("id")
-    .single();
+  const { data: schoolCatalogRow, error: schoolCatalogError } = await supabase
+    .from("schools")
+    .select("id,name,address_line1,address_line2,suburb,city,state,postcode,country,latitude,longitude")
+    .eq("id", schoolId)
+    .maybeSingle();
+
+  let schoolSnapshot: Record<string, string | number | null> | null = null;
+  if (!schoolCatalogError && schoolCatalogRow && typeof schoolCatalogRow === "object") {
+    const loc = schoolCatalogRowToLocationData(schoolCatalogRow as Record<string, unknown>, schoolId);
+    if (loc) {
+      schoolSnapshot = schoolLocationToSnapshotPayload(loc);
+    }
+  }
+
+  const bookingInsertBase = {
+    school_admin_user_id: session.sub,
+    tutor_user_id: tutorUserId,
+    school_id: schoolId,
+    booking_type: bookingType,
+    requested_timezone: timezone,
+    notes: notes || null,
+    programme_start_date: programmeStartDate,
+    programme_end_date: programmeEndDate,
+    status: "pending" as const,
+  };
+
+  let bookingRow: { id: string } | null = null;
+  let bookingInsertError: { message: string } | null = null;
+
+  if (schoolSnapshot) {
+    const attempt = await supabase
+      .from("bookings")
+      .insert({ ...bookingInsertBase, school_snapshot: schoolSnapshot })
+      .select("id")
+      .single();
+    bookingRow = attempt.data as { id: string } | null;
+    bookingInsertError = attempt.error;
+    if (
+      bookingInsertError &&
+      schoolSnapshot &&
+      /school_snapshot|column|schema/i.test(bookingInsertError.message ?? "")
+    ) {
+      const retry = await supabase.from("bookings").insert(bookingInsertBase).select("id").single();
+      bookingRow = retry.data as { id: string } | null;
+      bookingInsertError = retry.error;
+    }
+  } else {
+    const attempt = await supabase.from("bookings").insert(bookingInsertBase).select("id").single();
+    bookingRow = attempt.data as { id: string } | null;
+    bookingInsertError = attempt.error;
+  }
+
   if (bookingInsertError || !bookingRow) {
     return { error: bookingInsertError?.message ?? "Failed to create booking." };
   }

@@ -6,6 +6,7 @@ import {
 } from "../../../../../lib/auth/moodle-sso";
 import { setMarketplaceSession, deterministicUuidFromMoodleId } from "../../../../../lib/auth/session";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
+import { parseMoodleSchoolProfilesParam } from "../../../../../lib/schools/moodle-school-profiles";
 
 function splitNameParts(fullName: string | null): { firstName: string | null; lastName: string | null } {
   const normalized = (fullName ?? "").trim();
@@ -147,6 +148,32 @@ export async function GET(request: NextRequest) {
 
   if (userUpsertError) {
     return NextResponse.redirect(new URL("/sign-in?error=profile_sync_failed", request.nextUrl.origin));
+  }
+
+  const schoolProfiles = parseMoodleSchoolProfilesParam(
+    request.nextUrl.searchParams.get("dbm_school_profiles_b64"),
+  );
+  if (schoolProfiles.length > 0) {
+    const syncedAt = new Date().toISOString();
+    const schoolRows = schoolProfiles.map((profile) => ({
+      id: profile.id,
+      name: profile.name,
+      address_line1: profile.address_line1,
+      address_line2: profile.address_line2,
+      suburb: profile.suburb,
+      city: profile.city,
+      state: profile.state,
+      postcode: profile.postcode,
+      country: profile.country,
+      latitude: profile.latitude,
+      longitude: profile.longitude,
+      synced_at: syncedAt,
+    }));
+    const { error: schoolsUpsertError } = await admin.from("schools").upsert(schoolRows, { onConflict: "id" });
+    if (schoolsUpsertError) {
+      // SSO still succeeds if migration 016 is not applied or sync is skipped.
+      console.warn("schools sync:", schoolsUpsertError.message);
+    }
   }
 
   await setMarketplaceSession({
