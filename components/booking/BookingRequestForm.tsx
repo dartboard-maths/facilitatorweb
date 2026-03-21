@@ -261,7 +261,7 @@ export function BookingRequestForm({
   }, []);
 
   return (
-    <form action={formAction} className="card border-0 shadow-sm">
+    <form action={formAction} className="card">
       <div className="card-body p-4">
         <h1 className="h3 mb-2">Book Tutor</h1>
         <p className="text-secondary mb-4">
@@ -368,7 +368,7 @@ export function BookingRequestForm({
                                             ? "btn-success"
                                             : "btn-outline-success"
                                         }`}
-                                        style={{ lineHeight: "normal" }}
+                                      style={{ lineHeight: "normal", whiteSpace: "nowrap" }}
                                         onClick={() =>
                                           handleSlotSelect({
                                             date: item.date,
@@ -425,7 +425,7 @@ export function BookingRequestForm({
                                     className={`btn btn-sm ${
                                       selectedSlotKey === rangeKey ? "btn-success" : "btn-outline-success"
                                     }`}
-                                    style={{ lineHeight: "normal" }}
+                                    style={{ lineHeight: "normal", whiteSpace: "nowrap" }}
                                     onClick={() =>
                                       handleProgrammeRangeSelect({
                                         weekday: group.weekday,
