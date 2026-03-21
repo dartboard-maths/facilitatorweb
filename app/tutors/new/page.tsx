@@ -74,14 +74,19 @@ export default async function NewTutorProfilePage() {
             <Link href="/tutors" className="btn btn-link px-0">
               Tutors
             </Link>
-            <Link href="/role-select" className="btn btn-link px-0">
-              Choose role
+            <Link href="/bookings" className="btn btn-link px-0">
+              Bookings
             </Link>
-            <form action="/api/auth/sign-out" method="post" className="ms-auto">
-              <button type="submit" className="btn btn-outline-secondary btn-sm">
-                Sign out
-              </button>
-            </form>
+            <div className="ms-auto d-flex align-items-center gap-2">
+              <Link href="/role-select" className="btn btn-outline-secondary btn-sm">
+                Choose role
+              </Link>
+              <form action="/api/auth/sign-out" method="post">
+                <button type="submit" className="btn btn-outline-secondary btn-sm">
+                  Sign out
+                </button>
+              </form>
+            </div>
           </div>
           <TutorProfileForm
             action={createTutorProfile}

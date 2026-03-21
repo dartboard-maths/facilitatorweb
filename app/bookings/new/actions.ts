@@ -284,6 +284,21 @@ export async function createBookingRequest(
     return { error: sessionsInsertError.message };
   }
 
+  const summaryMessage =
+    bookingType === "single_lesson"
+      ? `Booking request created for ${sessionWindows[0]?.date ?? "selected date"} (${sessionWindows[0]?.startIso.slice(11, 16) ?? "--:--"}-${sessionWindows[0]?.endIso.slice(11, 16) ?? "--:--"}).`
+      : `Programme booking created (${programmeStartDate ?? "?"} to ${programmeEndDate ?? "?"}) with ${sessionWindows.length} sessions.`;
+  const { error: messageInsertError } = await supabase.from("booking_messages").insert({
+    booking_id: bookingId,
+    sender_user_id: session.sub,
+    sender_role: "school_admin",
+    message_type: "booking_created",
+    body: summaryMessage,
+  });
+  if (messageInsertError && !/booking_messages/i.test(messageInsertError.message)) {
+    return { error: messageInsertError.message };
+  }
+
   revalidatePath("/tutors");
   return { success: "Booking request created. Awaiting tutor confirmation." };
 }

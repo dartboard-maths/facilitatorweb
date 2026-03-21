@@ -99,8 +99,29 @@ export default async function NewBookingPage({ searchParams }: NewBookingPagePro
 
   return (
     <main className="container py-5">
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
+        <Link href="/" className="btn btn-link px-0">
+          Home
+        </Link>
+        <Link href="/tutors" className="btn btn-link px-0">
+          Tutors
+        </Link>
+        <Link href="/bookings" className="btn btn-link px-0">
+          Bookings
+        </Link>
+        <div className="ms-auto d-flex align-items-center gap-2">
+          <Link href="/role-select" className="btn btn-outline-secondary btn-sm">
+            Choose role
+          </Link>
+          <form action="/api/auth/sign-out" method="post">
+            <button type="submit" className="btn btn-outline-secondary btn-sm">
+              Sign out
+            </button>
+          </form>
+        </div>
+      </div>
       <div className="row justify-content-center">
-        <div className="col-12 col-lg-8">
+        <div className="col-12">
           <BookingRequestForm
             action={createBookingRequest}
             tutorUserId={tutorRow.user_id}
