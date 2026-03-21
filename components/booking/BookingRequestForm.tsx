@@ -12,6 +12,8 @@ type BookingRequestFormProps = {
   tutorUserId: string;
   tutorName: string;
   schoolIds: string[];
+  /** When provided (e.g. from synced Moodle data), shown in the school dropdown instead of raw ids only. */
+  schoolOptions?: Array<{ id: string; label: string }>;
   availabilityRules: Array<{
     weekday: number;
     startTime: string;
@@ -65,6 +67,7 @@ export function BookingRequestForm({
   tutorUserId,
   tutorName,
   schoolIds,
+  schoolOptions,
   availabilityRules,
   blockedDates,
 }: BookingRequestFormProps) {
@@ -81,6 +84,12 @@ export function BookingRequestForm({
   const [programmeEndTime, setProgrammeEndTime] = useState("");
   const [selectedSlotKey, setSelectedSlotKey] = useState<string | null>(null);
   const defaultSchoolId = useMemo(() => schoolIds[0] ?? "", [schoolIds]);
+  const schoolSelectOptions = useMemo(() => {
+    if (schoolOptions?.length) {
+      return schoolOptions;
+    }
+    return schoolIds.map((id) => ({ id, label: id }));
+  }, [schoolIds, schoolOptions]);
   const blockedDateSet = useMemo(() => new Set(blockedDates), [blockedDates]);
   const slotLookaheadDays = TERM_PLANNING_LOOKAHEAD_DAYS;
 
@@ -276,9 +285,9 @@ export function BookingRequestForm({
               School
             </label>
             <select id="school_id" name="school_id" className="form-select" defaultValue={defaultSchoolId} required>
-              {schoolIds.map((schoolId) => (
-                <option key={schoolId} value={schoolId}>
-                  {schoolId}
+              {schoolSelectOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
                 </option>
               ))}
             </select>

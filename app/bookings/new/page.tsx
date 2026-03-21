@@ -97,6 +97,27 @@ export default async function NewBookingPage({ searchParams }: NewBookingPagePro
     .map((row) => row.override_date)
     .filter(Boolean);
 
+  const { data: schoolNameRows, error: schoolNamesError } = await supabase
+    .from("schools")
+    .select("id,name")
+    .in("id", session.managedSchoolIds);
+
+  const schoolOptions = (() => {
+    if (schoolNamesError || !schoolNameRows) {
+      return session.managedSchoolIds.map((id) => ({ id, label: id }));
+    }
+    const nameById = new Map(
+      schoolNameRows.map((row) => [row.id as string, String(row.name ?? "").trim()]),
+    );
+    return session.managedSchoolIds.map((id) => {
+      const name = nameById.get(id);
+      return {
+        id,
+        label: name ? `${name} (${id})` : id,
+      };
+    });
+  })();
+
   return (
     <main className="container py-5">
       <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
@@ -127,6 +148,7 @@ export default async function NewBookingPage({ searchParams }: NewBookingPagePro
             tutorUserId={tutorRow.user_id}
             tutorName={tutorRow.name}
             schoolIds={session.managedSchoolIds}
+            schoolOptions={schoolOptions}
             availabilityRules={availabilityRules.map((rule) => ({
               weekday: rule.weekday,
               startTime: String(rule.start_time).slice(0, 5),

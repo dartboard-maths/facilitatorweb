@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookingDecisionBar } from "../../../components/booking/BookingDecisionBar";
+import { SchoolLocationCard } from "../../../components/booking/SchoolLocationCard";
 import { BookingSessionsView } from "../../../components/booking/BookingSessionsView";
 import { BookingThread } from "../../../components/booking/BookingThread";
 import { postBookingMessage, submitBookingDecision } from "../actions";
 import { getMarketplaceSession } from "../../../lib/auth/session";
 import { createAdminClient } from "../../../lib/supabase/admin";
+import { resolveSchoolLocationForBooking } from "../../../lib/schools/school-location";
 
 type BookingDetailPageProps = {
   params: {
@@ -18,6 +20,7 @@ type BookingRow = {
   status: string;
   booking_type: string;
   school_id: string;
+  school_snapshot: unknown | null;
   tutor_user_id: string;
   school_admin_user_id: string;
   requested_timezone: string;
@@ -64,13 +67,29 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   }
 
   const supabase = createAdminClient();
-  const { data: bookingData, error: bookingError } = await supabase
+  let bookingQuery = await supabase
     .from("bookings")
     .select(
-      "id,status,booking_type,school_id,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at",
+      "id,status,booking_type,school_id,school_snapshot,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at",
     )
     .eq("id", bookingId)
     .maybeSingle();
+
+  if (
+    bookingQuery.error &&
+    /school_snapshot|schema cache|column/i.test(bookingQuery.error.message ?? "")
+  ) {
+    bookingQuery = await supabase
+      .from("bookings")
+      .select(
+        "id,status,booking_type,school_id,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at",
+      )
+      .eq("id", bookingId)
+      .maybeSingle();
+  }
+
+  const bookingData = bookingQuery.data as (BookingRow & { school_snapshot?: unknown }) | null;
+  const bookingError = bookingQuery.error;
 
   if (bookingError || !bookingData) {
     return (
@@ -85,7 +104,27 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     );
   }
 
-  const booking = bookingData as BookingRow;
+  const booking = {
+    ...bookingData,
+    school_snapshot: (bookingData as { school_snapshot?: unknown }).school_snapshot ?? null,
+  } as BookingRow;
+
+  const schoolLookup = await supabase
+    .from("schools")
+    .select(
+      "id,name,address_line1,address_line2,suburb,city,state,postcode,country,latitude,longitude",
+    )
+    .eq("id", booking.school_id)
+    .maybeSingle();
+  const schoolCatalogRow =
+    !schoolLookup.error && schoolLookup.data ? (schoolLookup.data as Record<string, unknown>) : null;
+
+  const { data: schoolForDisplay, source: schoolDisplaySource } = resolveSchoolLocationForBooking({
+    schoolSnapshot: booking.school_snapshot,
+    catalogRow: schoolCatalogRow,
+    schoolId: booking.school_id,
+  });
+
   const isTutor = session.sub === booking.tutor_user_id;
   const isSchoolAdminForBooking =
     session.isSchoolAdmin &&
@@ -154,6 +193,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
         </Link>
       </div>
 
+      <SchoolLocationCard
+        school={schoolForDisplay}
+        fallbackSchoolId={booking.school_id}
+        displaySource={schoolDisplaySource}
+      />
+
       <div className="card border-0 shadow-sm mb-3">
         <div className="card-body p-3">
           <div className="row g-3">
@@ -172,10 +217,6 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             <div className="col-6 col-md-3">
               <div className="small text-secondary">Type</div>
               <div>{booking.booking_type === "programme_block" ? "Programme block" : "Single lesson"}</div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="small text-secondary">School</div>
-              <div>{booking.school_id}</div>
             </div>
             <div className="col-6 col-md-3">
               <div className="small text-secondary">Timezone</div>
