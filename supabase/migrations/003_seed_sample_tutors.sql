@@ -269,3 +269,52 @@ set
   location = excluded.location,
   travel_radius_km = excluded.travel_radius_km,
   updated_at = now();
+
+-- Seed recurring availability slots for approximately one-third of tutors.
+-- Guarded so this migration remains safe even if availability tables are not yet created.
+do $$
+begin
+  if to_regclass('public.tutor_availability_rules') is not null then
+    with ranked_tutors as (
+      select
+        t.user_id,
+        row_number() over (order by t.user_id) as tutor_rank
+      from public.tutors t
+    ),
+    tutors_with_slots as (
+      -- Select every third tutor (deterministic) to keep seeded availability realistic.
+      select rt.user_id
+      from ranked_tutors rt
+      where ((rt.tutor_rank - 1) % 3) = 0
+    ),
+    weekly_slots as (
+      select 1::smallint as weekday, '15:00'::time as start_time, '17:00'::time as end_time
+      union all
+      select 3::smallint, '15:00'::time, '17:00'::time
+      union all
+      select 6::smallint, '09:00'::time, '12:00'::time
+    )
+    insert into public.tutor_availability_rules (
+      tutor_user_id,
+      weekday,
+      start_time,
+      end_time,
+      timezone,
+      is_active
+    )
+    select
+      tws.user_id,
+      ws.weekday,
+      ws.start_time,
+      ws.end_time,
+      'UTC',
+      true
+    from tutors_with_slots tws
+    cross join weekly_slots ws
+    on conflict (tutor_user_id, weekday, start_time, end_time) do update
+    set
+      timezone = excluded.timezone,
+      is_active = excluded.is_active,
+      updated_at = now();
+  end if;
+end $$;

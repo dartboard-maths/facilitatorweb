@@ -10,6 +10,8 @@ type MarketplaceSessionPayload = {
   firstName: string | null;
   lastName: string | null;
   moodlePhotoUrl: string | null;
+  isSchoolAdmin: boolean;
+  managedSchoolIds: string[];
   moodleUserId: string;
   exp: number;
 };
@@ -59,6 +61,8 @@ export async function setMarketplaceSession(input: {
   firstName?: string | null;
   lastName?: string | null;
   moodlePhotoUrl?: string | null;
+  isSchoolAdmin?: boolean;
+  managedSchoolIds?: string[];
   maxAgeSeconds?: number;
 }) {
   const maxAgeSeconds = input.maxAgeSeconds ?? 60 * 60 * 8;
@@ -69,6 +73,8 @@ export async function setMarketplaceSession(input: {
     firstName: input.firstName?.trim() || null,
     lastName: input.lastName?.trim() || null,
     moodlePhotoUrl: input.moodlePhotoUrl?.trim() || null,
+    isSchoolAdmin: Boolean(input.isSchoolAdmin),
+    managedSchoolIds: (input.managedSchoolIds ?? []).map((id) => id.trim()).filter(Boolean),
     moodleUserId: input.moodleUserId.trim(),
     exp: Math.floor(Date.now() / 1000) + maxAgeSeconds,
   };
@@ -113,7 +119,17 @@ export async function getMarketplaceSession(): Promise<MarketplaceSessionPayload
     if (payload.exp <= Math.floor(Date.now() / 1000)) {
       return null;
     }
-    return payload;
+    return {
+      ...payload,
+      isSchoolAdmin: Boolean(payload.isSchoolAdmin),
+      managedSchoolIds: Array.isArray(payload.managedSchoolIds)
+        ? payload.managedSchoolIds.map((value) => String(value))
+        : [],
+      moodlePhotoUrl: payload.moodlePhotoUrl ?? null,
+      firstName: payload.firstName ?? null,
+      lastName: payload.lastName ?? null,
+      name: payload.name ?? null,
+    };
   } catch {
     return null;
   }
