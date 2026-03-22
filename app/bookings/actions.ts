@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { getMarketplaceSession } from "../../lib/auth/session";
+import { getMarketplaceViewRoleFromCookies } from "../../lib/auth/view-role";
+import { resolveActorRoleForBookingAction } from "../../lib/bookings/resolve-booking-actor-role";
 import { createAdminClient } from "../../lib/supabase/admin";
+import {
+  schoolCatalogRowToLocationData,
+  schoolLocationToSnapshotPayload,
+} from "../../lib/schools/school-location";
+import { normalizeMarketplaceSchoolId } from "../../lib/schools/school-id";
 
 export type BookingActionState = {
   error?: string;
@@ -17,7 +24,6 @@ type BookingRow = {
   school_id: string;
 };
 
-type ActorRole = "school_admin" | "tutor";
 type BookingDecision = "accept" | "decline" | "request_changes";
 
 function canTransitionStatus(currentStatus: string, nextStatus: string): boolean {
@@ -38,36 +44,12 @@ function canTransitionStatus(currentStatus: string, nextStatus: string): boolean
   return false;
 }
 
-function actorLabel(role: ActorRole): string {
+function actorLabel(role: "school_admin" | "tutor"): string {
   return role === "tutor" ? "Tutor" : "School admin";
 }
 
 function normalizeMessage(value: FormDataEntryValue | null): string {
   return String(value ?? "").trim();
-}
-
-async function resolveBookingActorRole(input: {
-  booking: BookingRow;
-  session: NonNullable<Awaited<ReturnType<typeof getMarketplaceSession>>>;
-}): Promise<ActorRole | null> {
-  const { booking, session } = input;
-  if (session.sub === booking.tutor_user_id) {
-    return "tutor";
-  }
-
-  if (!session.isSchoolAdmin) {
-    return null;
-  }
-
-  if (session.sub === booking.school_admin_user_id) {
-    return "school_admin";
-  }
-
-  if (session.managedSchoolIds.includes(booking.school_id)) {
-    return "school_admin";
-  }
-
-  return null;
 }
 
 export async function postBookingMessage(
@@ -94,10 +76,8 @@ export async function postBookingMessage(
   if (bookingError) return { error: bookingError.message };
   if (!booking) return { error: "Booking not found." };
 
-  const actorRole = await resolveBookingActorRole({
-    booking: booking as BookingRow,
-    session,
-  });
+  const preferredRole = await getMarketplaceViewRoleFromCookies();
+  const actorRole = resolveActorRoleForBookingAction(session, booking as BookingRow, preferredRole);
   if (!actorRole) {
     return { error: "You do not have permission to message on this booking." };
   }
@@ -158,10 +138,8 @@ export async function submitBookingDecision(
   if (bookingError) return { error: bookingError.message };
   if (!booking) return { error: "Booking not found." };
 
-  const actorRole = await resolveBookingActorRole({
-    booking: booking as BookingRow,
-    session,
-  });
+  const preferredRole = await getMarketplaceViewRoleFromCookies();
+  const actorRole = resolveActorRoleForBookingAction(session, booking as BookingRow, preferredRole);
   if (!actorRole) {
     return { error: "You do not have permission to update this booking." };
   }
@@ -219,4 +197,85 @@ export async function submitBookingDecision(
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${bookingId}`);
   return { success: `Booking ${nextStatus.replace("_", " ")}.` };
+}
+
+/**
+ * Copies the latest row from public.schools onto this booking's school_snapshot
+ * (after cohort admin has signed in via Moodle SSO at least once).
+ */
+export async function refreshBookingSchoolSnapshot(
+  _prevState: BookingActionState,
+  formData: FormData,
+): Promise<BookingActionState> {
+  const session = await getMarketplaceSession();
+  if (!session) {
+    return { error: "You must be signed in." };
+  }
+
+  const bookingId = normalizeMessage(formData.get("booking_id"));
+  if (!bookingId) {
+    return { error: "Missing booking id." };
+  }
+
+  const supabase = createAdminClient();
+  const { data: booking, error: bookingError } = await supabase
+    .from("bookings")
+    .select("id,school_id,tutor_user_id,school_admin_user_id")
+    .eq("id", bookingId)
+    .maybeSingle();
+  if (bookingError) return { error: bookingError.message };
+  if (!booking) return { error: "Booking not found." };
+
+  const preferredRole = await getMarketplaceViewRoleFromCookies();
+  const actorRole = resolveActorRoleForBookingAction(session, booking as BookingRow, preferredRole);
+  if (!actorRole) {
+    return { error: "You do not have permission to update this booking." };
+  }
+
+  if (actorRole !== "school_admin") {
+    return {
+      error:
+        "Refreshing the school address is a school admin action. Switch to School admin via Choose role.",
+    };
+  }
+
+  const schoolKey = normalizeMarketplaceSchoolId(booking.school_id);
+  const { data: schoolRow, error: schoolError } = await supabase
+    .from("schools")
+    .select("id,name,address_line1,address_line2,suburb,city,state,postcode,country,latitude,longitude")
+    .eq("id", schoolKey)
+    .maybeSingle();
+
+  if (schoolError) return { error: schoolError.message };
+  if (!schoolRow) {
+    return {
+      error:
+        "No school directory row yet. Ask a cohort admin to save the address in Moodle (School Builder → School Details), then sign in to the marketplace once via Moodle SSO.",
+    };
+  }
+
+  const loc = schoolCatalogRowToLocationData(schoolRow as Record<string, unknown>, schoolKey);
+  if (!loc) {
+    return {
+      error:
+        "School directory has no usable address or coordinates yet. Complete the address in Moodle School Builder.",
+    };
+  }
+
+  const snapshot = schoolLocationToSnapshotPayload(loc);
+  const { error: updateError } = await supabase
+    .from("bookings")
+    .update({ school_snapshot: snapshot, updated_at: new Date().toISOString() })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    if (/school_snapshot|column|schema/i.test(updateError.message ?? "")) {
+      return { error: "Apply migration 017 (school_snapshot on bookings) in Supabase." };
+    }
+    return { error: updateError.message };
+  }
+
+  revalidatePath("/bookings");
+  revalidatePath(`/bookings/${bookingId}`);
+  return { success: "School location details loaded onto this booking." };
 }

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
+import { MARKETPLACE_VIEW_ROLE_COOKIE } from "./view-role";
 
 const SESSION_COOKIE_NAME = "marketplace_session";
 
@@ -95,6 +96,7 @@ export async function setMarketplaceSession(input: {
 export async function clearMarketplaceSession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(MARKETPLACE_VIEW_ROLE_COOKIE);
 }
 
 export async function getMarketplaceSession(): Promise<MarketplaceSessionPayload | null> {

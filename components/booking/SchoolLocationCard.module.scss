@@ -1,0 +1,36 @@
+// CSS Grid gives reliable equal-height columns; Bootstrap flex rows often fail here
+// because percentage heights on children don't resolve against the row's auto height.
+
+.layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.layoutWithMap {
+  @media (min-width: 992px) {
+    // Match previous col-4 / col-8 intent (1 : 2)
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    align-items: stretch;
+  }
+}
+
+.mapColumn {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  // Fill the grid cell (reliable with CSS Grid; Bootstrap row + h-100 was not).
+  align-self: stretch;
+  height: 100%;
+}
+
+.mapContainer {
+  // Basis 0 (not `auto`): Mapbox’s intrinsic ~220px height must not become the flex-basis,
+  // or this box never grows past min-height and the column stays short.
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 220px;
+  min-width: 0;
+  overflow: hidden;
+}

@@ -4,6 +4,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Link from "next/link";
+import { SUBJECT_OPTIONS } from "../../lib/tutor/subject-level-options";
 import { createClient } from "../../lib/supabase/client";
 import styles from "./TutorMap.module.scss";
 
@@ -130,9 +131,7 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
 
     return tutors.filter((tutor) => {
       const subjectMatches = normalizedSubject
-        ? tutor.subjects.some((subject) =>
-            subject.toLowerCase().includes(normalizedSubject),
-          )
+        ? tutor.subjects.some((subject) => subject.toLowerCase() === normalizedSubject)
         : true;
       const levelMatches = normalizedLevel
         ? tutor.levels.some((level) => level.toLowerCase() === normalizedLevel)
@@ -536,17 +535,42 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
 
           {(isMobilePanelExpanded || !isMobileViewport) && (
             <>
-              <div className="col-12">
+              <div className="col-12 col-md-6">
                 <label htmlFor="subject" className="form-label mb-1">
                   Subject
                 </label>
-                <input
+                <select
                   id="subject"
-                  className="form-control"
+                  className="form-select"
                   value={subjectFilter}
                   onChange={(event) => setSubjectFilter(event.target.value)}
-                  placeholder="e.g. Math"
-                />
+                >
+                  <option value="">All subjects</option>
+                  {SUBJECT_OPTIONS.map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <label htmlFor="level" className="form-label mb-1">
+                  Level
+                </label>
+                <select
+                  id="level"
+                  className="form-select"
+                  value={levelFilter}
+                  onChange={(event) => setLevelFilter(event.target.value)}
+                >
+                  <option value="">All levels</option>
+                  {levelOptions.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="col-6">
@@ -581,25 +605,6 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
                   onChange={(event) => setMaxPriceFilter(event.target.value)}
                   placeholder="Any"
                 />
-              </div>
-
-              <div className="col-12">
-                <label htmlFor="level" className="form-label mb-1">
-                  Level
-                </label>
-                <select
-                  id="level"
-                  className="form-select"
-                  value={levelFilter}
-                  onChange={(event) => setLevelFilter(event.target.value)}
-                >
-                  <option value="">All levels</option>
-                  {levelOptions.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
-                </select>
               </div>
             </>
           )}

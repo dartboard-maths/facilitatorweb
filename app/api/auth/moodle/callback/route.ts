@@ -150,9 +150,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in?error=profile_sync_failed", request.nextUrl.origin));
   }
 
-  const schoolProfiles = parseMoodleSchoolProfilesParam(
-    request.nextUrl.searchParams.get("dbm_school_profiles_b64"),
-  );
+  const rawSchoolProfilesB64 = request.nextUrl.searchParams.get("dbm_school_profiles_b64");
+  const schoolProfiles = parseMoodleSchoolProfilesParam(rawSchoolProfilesB64);
+  if (managedSchoolIds.length > 0 && schoolProfiles.length === 0) {
+    console.warn(
+      "[moodle-sso] School profile payload empty after parse; managedSchoolIds=%s; dbm_school_profiles_b64 length=%s (check Moodle marketplace.php category lookup + JSON encode).",
+      managedSchoolIds.join(","),
+      rawSchoolProfilesB64?.length ?? 0,
+    );
+  }
   if (schoolProfiles.length > 0) {
     const syncedAt = new Date().toISOString();
     const schoolRows = schoolProfiles.map((profile) => ({
