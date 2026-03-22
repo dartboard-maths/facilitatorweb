@@ -26,6 +26,9 @@ type TutorSearchResult = {
   latitude: number;
   longitude: number;
   has_active_slots: boolean;
+  /** Bayesian-smoothed public average when rating_count > 0 */
+  avg_rating?: number;
+  rating_count?: number;
 };
 
 type Coordinates = {
@@ -106,7 +109,32 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
           ...(row as unknown as TutorSearchResult),
           has_active_slots: row.has_active_slots === undefined ? true : Boolean(row.has_active_slots),
         }));
-        setTutors(normalizedRows);
+
+        let merged: TutorSearchResult[] = normalizedRows;
+        try {
+          const ids = normalizedRows.map((r) => r.user_id).filter(Boolean);
+          if (ids.length > 0) {
+            const res = await fetch(`/api/tutors/ratings?userIds=${encodeURIComponent(ids.join(","))}`);
+            if (res.ok) {
+              const json = (await res.json()) as Record<
+                string,
+                { avgDisplay: number; count: number }
+              >;
+              merged = normalizedRows.map((row) => {
+                const s = json[row.user_id];
+                return {
+                  ...row,
+                  avg_rating: s?.avgDisplay ?? 0,
+                  rating_count: s?.count ?? 0,
+                };
+              });
+            }
+          }
+        } catch {
+          merged = normalizedRows;
+        }
+
+        setTutors(merged);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load tutors.";
         setError(message);
@@ -639,6 +667,12 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
                       <h3 className="h6 mb-1">{tutor.name}</h3>
                       <span className="badge text-bg-light">{tutor.distance_km.toFixed(1)} km</span>
                     </div>
+                    {(tutor.rating_count ?? 0) > 0 && (
+                      <p className="mb-1 small text-warning">
+                        ★ {tutor.avg_rating?.toFixed(1)} ({tutor.rating_count} review
+                        {(tutor.rating_count ?? 0) === 1 ? "" : "s"})
+                      </p>
+                    )}
                     <p className="mb-1 text-secondary">${tutor.hourly_rate}/hr</p>
                     <p className="mb-1 small text-secondary">{tutor.subjects.join(", ")}</p>
                     <p className="mb-1 small">{tutor.levels.join(", ")}</p>
@@ -670,6 +704,13 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
               />
             </div>
             <p className="mb-2">{selectedTutor.bio}</p>
+            {(selectedTutor.rating_count ?? 0) > 0 && (
+              <p className="mb-2 small">
+                <strong>Rating:</strong> ★ {selectedTutor.avg_rating?.toFixed(1)} / 5 (
+                {selectedTutor.rating_count} public review
+                {(selectedTutor.rating_count ?? 0) === 1 ? "" : "s"})
+              </p>
+            )}
             <p className="mb-1">
               <strong>Subjects:</strong> {selectedTutor.subjects.join(", ")}
             </p>

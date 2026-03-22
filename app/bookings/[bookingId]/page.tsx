@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookingActiveCancellationBanner } from "../../../components/booking/BookingActiveCancellationBanner";
+import { BookingReviewPanel } from "../../../components/booking/BookingReviewPanel";
 import { BookingActiveCancellationModal } from "../../../components/booking/BookingActiveCancellationModal";
 import { BookingDecisionBar } from "../../../components/booking/BookingDecisionBar";
 import { BookingImmediateCancelButton } from "../../../components/booking/BookingImmediateCancelButton";
@@ -18,6 +19,7 @@ import { resolveActorRoleForBookingAction } from "../../../lib/bookings/resolve-
 import { createAdminClient } from "../../../lib/supabase/admin";
 import { resolveSchoolLocationForBooking } from "../../../lib/schools/school-location";
 import { normalizeMarketplaceSchoolId } from "../../../lib/schools/school-id";
+import { refreshBookingReviewPairVisibility } from "../../../lib/reviews/sync-public-visible";
 
 type BookingDetailPageProps = {
   params: {
@@ -178,6 +180,8 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     redirect("/bookings");
   }
 
+  await refreshBookingReviewPairVisibility(supabase, booking.id);
+
   const preferredViewRole = await getMarketplaceViewRoleFromCookies();
   const viewRole = resolveActorRoleForBookingAction(session, booking, preferredViewRole) ?? "tutor";
 
@@ -257,6 +261,40 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     messageFallback: cancellationMessageFallback,
   });
 
+  type BookingReviewRow = {
+    reviewer_user_id: string;
+    reviewer_role: "tutor" | "school_admin" | null;
+    rating: number;
+    recommendation_text: string | null;
+    moderation_status: string;
+    public_visible: boolean;
+  };
+  let bookingReviews: BookingReviewRow[] = [];
+  const reviewsQuery = await supabase
+    .from("booking_reviews")
+    .select("reviewer_user_id,reviewer_role,rating,recommendation_text,moderation_status,public_visible")
+    .eq("booking_id", booking.id);
+  if (!reviewsQuery.error && reviewsQuery.data) {
+    bookingReviews = reviewsQuery.data as BookingReviewRow[];
+  }
+  const dualRoleSameUser = booking.tutor_user_id === booking.school_admin_user_id;
+  const myReviewRow = dualRoleSameUser
+    ? bookingReviews.find(
+        (r) => r.reviewer_user_id === session.sub && r.reviewer_role === viewRole,
+      )
+    : bookingReviews.find((r) => r.reviewer_user_id === session.sub);
+  const otherPartyUserId =
+    session.sub === booking.tutor_user_id ? booking.school_admin_user_id : booking.tutor_user_id;
+  const partnerHasReview = dualRoleSameUser
+    ? bookingReviews.some(
+        (r) =>
+          r.reviewer_user_id === session.sub &&
+          r.reviewer_role != null &&
+          r.reviewer_role !== viewRole,
+      )
+    : bookingReviews.some((r) => r.reviewer_user_id === otherPartyUserId);
+  const otherPartyDisplayName = displayName(userMap.get(otherPartyUserId) ?? null);
+
   return (
     <main className="container py-5">
       <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
@@ -331,6 +369,24 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           action={submitBookingDecision}
         />
       </div>
+
+      <BookingReviewPanel
+        bookingId={booking.id}
+        bookingStatus={statusNorm}
+        otherPartyDisplayName={otherPartyDisplayName}
+        canAct={canDecide}
+        myReview={
+          myReviewRow
+            ? {
+                rating: myReviewRow.rating,
+                recommendation_text: myReviewRow.recommendation_text,
+                moderation_status: myReviewRow.moderation_status,
+                public_visible: myReviewRow.public_visible,
+              }
+            : null
+        }
+        partnerHasReview={partnerHasReview}
+      />
 
       {canDecide && statusNorm === "cancellation_requested" && cancellationRequestedBy ? (
         <BookingActiveCancellationBanner
