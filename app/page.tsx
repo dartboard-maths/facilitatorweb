@@ -1,12 +1,31 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { CmsPageRenderer } from "../components/cms/CmsPageRenderer";
+import { CmsSiteFooter, CmsSiteHeader } from "../components/cms/CmsSiteChrome";
 import { getMarketplaceSession } from "../lib/auth/session";
+import { getCmsGlobalSettings, getCmsPageBySlug } from "../lib/cms/contentful";
 
-export default async function HomePage() {
-  const session = await getMarketplaceSession();
-  const roleHomeHref = session ? "/role-select" : "/sign-in";
-  const roleHomeLabel = session ? "Choose role" : "Sign in";
+const FALLBACK_HOME_TITLE = "Edu Placement";
+const FALLBACK_HOME_DESCRIPTION =
+  "Connect tutors and learners with trusted, location-aware matching.";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const homePage = await getCmsPageBySlug("home");
+
+  return {
+    title: homePage?.metadata.title || FALLBACK_HOME_TITLE,
+    description: homePage?.metadata.description || FALLBACK_HOME_DESCRIPTION,
+    keywords: homePage?.metadata.keywords || "",
+  };
+}
+
+type HomeRoleNavProps = {
+  roleHomeHref: string;
+  roleHomeLabel: string;
+};
+
+function FallbackHome({ roleHomeHref, roleHomeLabel }: HomeRoleNavProps) {
   return (
     <main className="container py-5">
       <div className="row justify-content-center">
@@ -40,3 +59,35 @@ export default async function HomePage() {
   );
 }
 
+export default async function HomePage() {
+  const session = await getMarketplaceSession();
+  const roleHomeHref = session ? "/role-select" : "/sign-in";
+  const roleHomeLabel = session ? "Choose role" : "Sign in";
+  const renderContext = {
+    contextualLinks: {
+      "#sign-in": {
+        href: roleHomeHref,
+        label: roleHomeLabel,
+      },
+    },
+  };
+
+  const [homePage, globalSettings] = await Promise.all([
+    getCmsPageBySlug("home"),
+    getCmsGlobalSettings(),
+  ]);
+
+  if (!homePage) {
+    return <FallbackHome roleHomeHref={roleHomeHref} roleHomeLabel={roleHomeLabel} />;
+  }
+
+  return (
+    <>
+      <CmsSiteHeader header={globalSettings?.header} />
+      <main>
+        <CmsPageRenderer components={homePage.components} renderContext={renderContext} />
+      </main>
+      <CmsSiteFooter footer={globalSettings?.footer} />
+    </>
+  );
+}

@@ -1,0 +1,135 @@
+.listBlock {
+  width: 100%;
+  padding: 4rem 0;
+}
+
+.listBlock--dark {
+  background-color: #111827;
+  color: #fff;
+}
+
+.listBlock--light {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.listBlock__container {
+  width: 100%;
+}
+
+.listBlock__title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.25rem;
+  text-align: center;
+  color: #111827;
+}
+
+.listBlock__copy {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4b5563;
+  text-align: center;
+  margin-bottom: 2.25rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.listBlock__items {
+  row-gap: 1rem;
+}
+
+.listItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--list-item-bg, #fff);
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgb(15 23 42 / 6%);
+  height: 100%;
+}
+
+.listItem__imageWrapper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+}
+
+.listItem__image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.listItem__imageStandard {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 0.35rem;
+}
+
+.listItem__content {
+  flex: 1;
+}
+
+.listItem__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #111827;
+  margin: 0 0 0.5rem;
+}
+
+.listItem__copy {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.listBlock__copyParagraph {
+  margin: 0 0 0.65rem;
+}
+
+.listBlock__copyParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.listBlock__copyHeading1,
+.listBlock__copyHeading2,
+.listBlock__copyHeading3,
+.listBlock__copyHeading4,
+.listBlock__copyHeading5,
+.listBlock__copyHeading6 {
+  margin: 0 0 0.4rem;
+}
+
+.listBlock__copyList,
+.listBlock__copyOrderedList {
+  margin: 0.5rem 0;
+  padding-left: 1.2rem;
+}
+
+.listBlock__copyQuote {
+  border-left: 4px solid #cbd5e1;
+  padding-left: 0.75rem;
+  margin: 0.75rem 0;
+  font-style: italic;
+}
+
+.listBlock__copyHr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.75rem 0;
+}
+
+.listBlock__copyLink {
+  color: #1d4ed8;
+  text-decoration: underline;
+}

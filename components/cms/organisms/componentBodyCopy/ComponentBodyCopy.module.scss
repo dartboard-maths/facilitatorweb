@@ -1,0 +1,172 @@
+.bodyCopy {
+  padding: 3rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .bodyCopy {
+    padding: 4rem 1rem;
+  }
+}
+
+.bodyCopy__container {
+  width: 100%;
+}
+
+.bodyCopy__title {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  color: #1f2937;
+}
+
+@media (min-width: 768px) {
+  .bodyCopy__title {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.bodyCopy__copy {
+  color: #374151;
+}
+
+.bodyCopy__copyParagraph {
+  font-size: 1rem;
+  line-height: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.bodyCopy__copyParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.bodyCopy__copyHeading1 {
+  font-size: 2rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+
+.bodyCopy__copyHeading2 {
+  font-size: 1.75rem;
+  line-height: 2rem;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.875rem;
+  color: #1f2937;
+}
+
+.bodyCopy__copyHeading3 {
+  font-size: 1.5rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #1f2937;
+}
+
+.bodyCopy__copyHeading4 {
+  font-size: 1.25rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.bodyCopy__copyHeading5 {
+  font-size: 1.125rem;
+  line-height: 1.375rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.bodyCopy__copyHeading6 {
+  font-size: 1rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.bodyCopy__copyList,
+.bodyCopy__copyOrderedList {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.bodyCopy__copyList {
+  list-style-type: disc;
+}
+
+.bodyCopy__copyOrderedList {
+  list-style-type: decimal;
+}
+
+.bodyCopy__copyListItem {
+  font-size: 1rem;
+  line-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.bodyCopy__copyQuote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.bodyCopy__copyHr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 2rem 0;
+}
+
+.bodyCopy__copyLink {
+  color: #3b82f6;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.bodyCopy__copyLink:hover {
+  color: #1d4ed8;
+}
+
+.bodyCopy__copyBold {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.bodyCopy__copyItalic {
+  font-style: italic;
+}
+
+.bodyCopy__copyUnderline {
+  text-decoration: underline;
+}
+
+.bodyCopy__copyCode {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, sfmono-regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.875rem;
+}
+
+.bodyCopy--light {
+  background: #f8fafc;
+}
+
+.bodyCopy--dark {
+  background: #0f172a;
+}

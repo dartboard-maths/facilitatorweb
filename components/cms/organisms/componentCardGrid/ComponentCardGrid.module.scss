@@ -1,0 +1,135 @@
+.cardGrid {
+  width: 100%;
+  padding: 2rem 0;
+}
+
+.cardGrid__title {
+  margin: 0 auto 1rem;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  max-width: 800px;
+}
+
+.cardGrid__intro {
+  margin: 0 auto 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: center;
+  max-width: 800px;
+}
+
+.cardGrid__grid {
+  margin-top: 0.25rem;
+}
+
+.cardGrid__card {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 18px rgb(15 23 42 / 10%);
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.cardGrid__card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgb(15 23 42 / 12%);
+}
+
+.card__imageWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.card__image img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+}
+
+.cardGrid__cardBody {
+  padding: 1.1rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+}
+
+.cardGrid__cardTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.cardGrid__cardSubHeading {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.cardGrid__cardDescription {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.cardGrid__cardCopy {
+  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.cardGrid__copyParagraph {
+  margin: 0 0 0.6rem;
+}
+
+.cardGrid__copyParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.cardGrid__copyList,
+.cardGrid__copyOrderedList {
+  margin: 0.6rem 0;
+  padding-left: 1.25rem;
+}
+
+.cardGrid__copyListItem {
+  margin: 0 0 0.2rem;
+}
+
+.cardGrid__copyLink {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.cardGrid__copyBold {
+  font-weight: 700;
+}
+
+.cardGrid__ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.cardGrid__ctaLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  padding: 0.65rem 1rem;
+  border: 1px solid #0f2745;
+  color: #0f2745;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cardGrid__ctaLink:hover {
+  background: #0f2745;
+  color: #fff;
+}
