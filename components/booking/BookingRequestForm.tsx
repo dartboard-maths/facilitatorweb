@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import type { BookingFormState } from "../../app/bookings/new/actions";
+import { formatBookingCalendarDayHeader } from "../../lib/datetime/booking-display";
 
 type BookingRequestFormProps = {
   action: (
@@ -126,10 +127,7 @@ export function BookingRequestForm({
 
       dates.push({
         date: dateKey,
-        label: date.toLocaleDateString(undefined, {
-          day: "2-digit",
-          month: "short",
-        }).toUpperCase(),
+        label: formatBookingCalendarDayHeader(dateKey),
         slots: daySlots,
       });
     }

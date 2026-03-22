@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getMarketplaceSession } from "../../../lib/auth/session";
+import { LEVEL_OPTIONS, SUBJECT_OPTIONS } from "../../../lib/tutor/subject-level-options";
 import { createAdminClient } from "../../../lib/supabase/admin";
 
 export type TutorProfileFormState = {
@@ -248,6 +249,14 @@ export async function createTutorProfile(
   const bio = String(formData.get("bio") ?? "").trim();
   const subjects = parseMultiSelect(formData, "subjects");
   const levels = parseMultiSelect(formData, "levels");
+  const allowedSubjects = new Set<string>(SUBJECT_OPTIONS);
+  const allowedLevels = new Set<string>(LEVEL_OPTIONS);
+  if (subjects.some((s) => !allowedSubjects.has(s))) {
+    return { error: "Invalid subject selection." };
+  }
+  if (levels.some((l) => !allowedLevels.has(l))) {
+    return { error: "Invalid level selection." };
+  }
   const hourlyRateRaw = Number(formData.get("hourly_rate"));
   const travelRadiusRaw = Number(formData.get("travel_radius_km"));
   const latitudeRaw = Number(formData.get("latitude"));

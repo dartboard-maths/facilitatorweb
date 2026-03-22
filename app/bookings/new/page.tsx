@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BookingRequestForm } from "../../../components/booking/BookingRequestForm";
 import { createBookingRequest } from "./actions";
 import { getMarketplaceSession } from "../../../lib/auth/session";
+import { getMarketplaceViewRoleFromCookies, resolveInboxViewRole } from "../../../lib/auth/view-role";
 import { createAdminClient } from "../../../lib/supabase/admin";
 
 type NewBookingPageProps = {
@@ -32,6 +33,20 @@ export default async function NewBookingPage({ searchParams }: NewBookingPagePro
   if (!session.isSchoolAdmin) {
     redirect("/tutors");
   }
+
+  const supabase = createAdminClient();
+  const { data: tutorRowForView } = await supabase
+    .from("tutors")
+    .select("id")
+    .eq("user_id", session.sub)
+    .maybeSingle();
+  const hasTutorProfile = Boolean(tutorRowForView);
+  const cookieRole = await getMarketplaceViewRoleFromCookies();
+  const inboxView = resolveInboxViewRole(session, { hasTutorProfile, cookieRole });
+  if (inboxView === "tutor") {
+    redirect(`/api/auth/view-role?role=school_admin&next=${encodeURIComponent("/bookings/new")}`);
+  }
+
   if (!session.managedSchoolIds.length) {
     return (
       <main className="container py-5">
@@ -59,7 +74,6 @@ export default async function NewBookingPage({ searchParams }: NewBookingPagePro
     );
   }
 
-  const supabase = createAdminClient();
   const { data: tutorRow } = await supabase
     .from("tutors")
     .select("user_id,name")

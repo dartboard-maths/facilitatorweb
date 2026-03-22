@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { TutorProfileFormState } from "../../app/tutors/new/actions";
+import { LEVEL_OPTIONS, SUBJECT_OPTIONS } from "../../lib/tutor/subject-level-options";
 import styles from "./TutorProfileForm.module.scss";
 
 type TutorProfileFormProps = {
@@ -44,18 +45,6 @@ type AddressFeature = {
   place_name: string;
   center?: [number, number];
 };
-
-const SUBJECT_OPTIONS = [
-  "dartboard-maths",
-];
-
-const LEVEL_OPTIONS = [
-  "Pre-Primary School",
-  "Primary School",
-  "Middle School",
-  "High School",
-  "University",
-];
 
 const WEEKDAYS = [
   { value: 0, label: "Sunday" },

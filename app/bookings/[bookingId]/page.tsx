@@ -1,13 +1,23 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { BookingActiveCancellationBanner } from "../../../components/booking/BookingActiveCancellationBanner";
+import { BookingActiveCancellationModal } from "../../../components/booking/BookingActiveCancellationModal";
 import { BookingDecisionBar } from "../../../components/booking/BookingDecisionBar";
+import { BookingImmediateCancelButton } from "../../../components/booking/BookingImmediateCancelButton";
 import { SchoolLocationCard } from "../../../components/booking/SchoolLocationCard";
 import { BookingSessionsView } from "../../../components/booking/BookingSessionsView";
 import { BookingThread } from "../../../components/booking/BookingThread";
-import { postBookingMessage, submitBookingDecision } from "../actions";
+import { postBookingMessage, refreshBookingSchoolSnapshot, submitBookingDecision } from "../actions";
 import { getMarketplaceSession } from "../../../lib/auth/session";
+import { getMarketplaceViewRoleFromCookies } from "../../../lib/auth/view-role";
+import {
+  getCancellationInitiatorRoleLabel,
+  viewerIsCounterpartyForCancellation,
+} from "../../../lib/bookings/cancellation-request-role";
+import { resolveActorRoleForBookingAction } from "../../../lib/bookings/resolve-booking-actor-role";
 import { createAdminClient } from "../../../lib/supabase/admin";
 import { resolveSchoolLocationForBooking } from "../../../lib/schools/school-location";
+import { normalizeMarketplaceSchoolId } from "../../../lib/schools/school-id";
 
 type BookingDetailPageProps = {
   params: {
@@ -28,6 +38,9 @@ type BookingRow = {
   programme_start_date: string | null;
   programme_end_date: string | null;
   created_at: string;
+  cancellation_requested_by?: string | null;
+  cancellation_request_comment?: string | null;
+  cancellation_requested_as_role?: "tutor" | "school_admin" | null;
 };
 
 type SessionRow = {
@@ -42,6 +55,7 @@ type MessageRow = {
   sender_role: string;
   body: string;
   created_at: string;
+  message_type?: string;
 };
 
 type UserRow = {
@@ -70,22 +84,51 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   let bookingQuery = await supabase
     .from("bookings")
     .select(
-      "id,status,booking_type,school_id,school_snapshot,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at",
+      "id,status,booking_type,school_id,school_snapshot,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at,cancellation_requested_by,cancellation_request_comment,cancellation_requested_as_role",
     )
     .eq("id", bookingId)
     .maybeSingle();
 
   if (
     bookingQuery.error &&
-    /school_snapshot|schema cache|column/i.test(bookingQuery.error.message ?? "")
+    /school_snapshot|cancellation_requested_by|cancellation_request_comment|cancellation_requested_as_role|schema cache|column/i.test(
+      bookingQuery.error.message ?? "",
+    )
   ) {
     bookingQuery = await supabase
       .from("bookings")
       .select(
-        "id,status,booking_type,school_id,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at",
+        "id,status,booking_type,school_id,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at,cancellation_requested_by,cancellation_request_comment,cancellation_requested_as_role",
       )
       .eq("id", bookingId)
       .maybeSingle();
+  }
+
+  if (
+    bookingQuery.error &&
+    /cancellation_requested_by|cancellation_request_comment|schema cache|column/i.test(
+      bookingQuery.error.message ?? "",
+    )
+  ) {
+    bookingQuery = await supabase
+      .from("bookings")
+      .select(
+        "id,status,booking_type,school_id,school_snapshot,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at",
+      )
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (
+      bookingQuery.error &&
+      /school_snapshot|schema cache|column/i.test(bookingQuery.error.message ?? "")
+    ) {
+      bookingQuery = await supabase
+        .from("bookings")
+        .select(
+          "id,status,booking_type,school_id,tutor_user_id,school_admin_user_id,requested_timezone,notes,programme_start_date,programme_end_date,created_at",
+        )
+        .eq("id", bookingId)
+        .maybeSingle();
+    }
   }
 
   const bookingData = bookingQuery.data as (BookingRow & { school_snapshot?: unknown }) | null;
@@ -109,12 +152,14 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     school_snapshot: (bookingData as { school_snapshot?: unknown }).school_snapshot ?? null,
   } as BookingRow;
 
+  const schoolKey = normalizeMarketplaceSchoolId(booking.school_id);
+
   const schoolLookup = await supabase
     .from("schools")
     .select(
       "id,name,address_line1,address_line2,suburb,city,state,postcode,country,latitude,longitude",
     )
-    .eq("id", booking.school_id)
+    .eq("id", schoolKey)
     .maybeSingle();
   const schoolCatalogRow =
     !schoolLookup.error && schoolLookup.data ? (schoolLookup.data as Record<string, unknown>) : null;
@@ -122,16 +167,19 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   const { data: schoolForDisplay, source: schoolDisplaySource } = resolveSchoolLocationForBooking({
     schoolSnapshot: booking.school_snapshot,
     catalogRow: schoolCatalogRow,
-    schoolId: booking.school_id,
+    schoolId: schoolKey,
   });
 
   const isTutor = session.sub === booking.tutor_user_id;
   const isSchoolAdminForBooking =
     session.isSchoolAdmin &&
-    (session.sub === booking.school_admin_user_id || session.managedSchoolIds.includes(booking.school_id));
+    (session.sub === booking.school_admin_user_id || session.managedSchoolIds.includes(schoolKey));
   if (!isTutor && !isSchoolAdminForBooking) {
     redirect("/bookings");
   }
+
+  const preferredViewRole = await getMarketplaceViewRoleFromCookies();
+  const viewRole = resolveActorRoleForBookingAction(session, booking, preferredViewRole) ?? "tutor";
 
   const { data: sessionsData } = await supabase
     .from("booking_sessions")
@@ -140,17 +188,34 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     .order("session_start", { ascending: true });
   const bookingSessions = (sessionsData ?? []) as SessionRow[];
 
-  const userIds = [booking.tutor_user_id, booking.school_admin_user_id];
+  const userIds = Array.from(
+    new Set(
+      [booking.tutor_user_id, booking.school_admin_user_id, booking.cancellation_requested_by].filter(
+        (id): id is string => typeof id === "string" && id.length > 0,
+      ),
+    ),
+  );
   const { data: userRows } = await supabase.from("users").select("id,full_name,email").in("id", userIds);
   const userMap = new Map((userRows ?? []).map((row) => [row.id, row as UserRow]));
 
   let threadUnavailableReason: string | null = null;
   let messages: MessageRow[] = [];
-  const { data: messageRows, error: messageError } = await supabase
+  const messageQueryWithType = await supabase
     .from("booking_messages")
-    .select("id,sender_role,body,created_at")
+    .select("id,sender_role,body,created_at,message_type")
     .eq("booking_id", booking.id)
     .order("created_at", { ascending: true });
+  const messageQueryFallback =
+    messageQueryWithType.error &&
+    /message_type|schema cache|column/i.test(messageQueryWithType.error.message ?? "")
+      ? await supabase
+          .from("booking_messages")
+          .select("id,sender_role,body,created_at")
+          .eq("booking_id", booking.id)
+          .order("created_at", { ascending: true })
+      : null;
+  const messageError = messageQueryFallback?.error ?? messageQueryWithType.error;
+  const messageRows = messageQueryFallback?.data ?? messageQueryWithType.data;
   if (messageError) {
     if (/booking_messages/i.test(messageError.message)) {
       threadUnavailableReason = "Booking conversation is not available until migration 015 is applied.";
@@ -162,6 +227,35 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   }
 
   const canDecide = isTutor || isSchoolAdminForBooking;
+  const statusNorm = booking.status.trim().toLowerCase();
+  const cancellationRequestedBy = booking.cancellation_requested_by ?? null;
+  const cancellationRequestComment = booking.cancellation_request_comment ?? null;
+
+  const originatorDisplayName =
+    cancellationRequestedBy != null
+      ? displayName(userMap.get(cancellationRequestedBy) ?? null)
+      : "";
+
+  const cancelThreadMessage = messages.find((m) => m.message_type === "cancellation_request");
+  const cancellationMessageFallback = {
+    cancellationRequestSenderRole: cancelThreadMessage?.sender_role,
+  };
+  const bookingCancellationSlice = {
+    tutor_user_id: booking.tutor_user_id,
+    school_admin_user_id: booking.school_admin_user_id,
+    cancellation_requested_by: cancellationRequestedBy,
+    cancellation_requested_as_role: booking.cancellation_requested_as_role ?? null,
+  };
+  const initiatorRoleLabel = getCancellationInitiatorRoleLabel(
+    bookingCancellationSlice,
+    cancellationMessageFallback,
+  );
+  const cancellationViewerIsCounterparty = viewerIsCounterpartyForCancellation({
+    viewerUserId: session.sub,
+    viewerViewRole: viewRole,
+    booking: bookingCancellationSlice,
+    messageFallback: cancellationMessageFallback,
+  });
 
   return (
     <main className="container py-5">
@@ -195,50 +289,21 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
 
       <SchoolLocationCard
         school={schoolForDisplay}
-        fallbackSchoolId={booking.school_id}
+        fallbackSchoolId={schoolKey}
         displaySource={schoolDisplaySource}
+        bookingId={canDecide && viewRole === "school_admin" ? booking.id : undefined}
+        showRefresh={canDecide && viewRole === "school_admin"}
+        refreshAction={canDecide && viewRole === "school_admin" ? refreshBookingSchoolSnapshot : undefined}
+        bookingSummary={{
+          tutorName: displayName(userMap.get(booking.tutor_user_id) ?? null),
+          schoolAdminName: displayName(userMap.get(booking.school_admin_user_id) ?? null),
+          status: booking.status,
+          bookingType: booking.booking_type,
+          programmeStartDate: booking.programme_start_date,
+          programmeEndDate: booking.programme_end_date,
+          notes: booking.notes,
+        }}
       />
-
-      <div className="card border-0 shadow-sm mb-3">
-        <div className="card-body p-3">
-          <div className="row g-3">
-            <div className="col-12 col-md-6">
-              <div className="small text-secondary">Tutor</div>
-              <div className="fw-semibold">{displayName(userMap.get(booking.tutor_user_id) ?? null)}</div>
-            </div>
-            <div className="col-12 col-md-6">
-              <div className="small text-secondary">School admin</div>
-              <div className="fw-semibold">{displayName(userMap.get(booking.school_admin_user_id) ?? null)}</div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="small text-secondary">Status</div>
-              <div className="text-capitalize">{booking.status.replace(/_/g, " ")}</div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="small text-secondary">Type</div>
-              <div>{booking.booking_type === "programme_block" ? "Programme block" : "Single lesson"}</div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="small text-secondary">Timezone</div>
-              <div>{booking.requested_timezone}</div>
-            </div>
-            {booking.booking_type === "programme_block" && (
-              <div className="col-12">
-                <div className="small text-secondary">Programme range</div>
-                <div>
-                  {(booking.programme_start_date ?? "?") + " to " + (booking.programme_end_date ?? "?")}
-                </div>
-              </div>
-            )}
-            {booking.notes && (
-              <div className="col-12">
-                <div className="small text-secondary">Request notes</div>
-                <div>{booking.notes}</div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       <div className="card border-0 shadow-sm mb-3">
         <div className="card-body p-3">
@@ -266,6 +331,26 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           action={submitBookingDecision}
         />
       </div>
+
+      {canDecide && statusNorm === "cancellation_requested" && cancellationRequestedBy ? (
+        <BookingActiveCancellationBanner
+          bookingId={booking.id}
+          viewerViewRole={viewRole}
+          isCounterparty={cancellationViewerIsCounterparty}
+          cancellationRequestComment={cancellationRequestComment}
+          originatorDisplayName={originatorDisplayName}
+          initiatorRoleLabel={initiatorRoleLabel}
+        />
+      ) : null}
+
+      {canDecide && (
+        <div className="mb-3 d-flex flex-wrap align-items-center gap-2">
+          {(statusNorm === "pending" || statusNorm === "changes_requested") && (
+            <BookingImmediateCancelButton bookingId={booking.id} />
+          )}
+          {statusNorm === "accepted" && <BookingActiveCancellationModal bookingId={booking.id} />}
+        </div>
+      )}
 
       {threadUnavailableReason ? (
         <div className="alert alert-warning" role="alert">

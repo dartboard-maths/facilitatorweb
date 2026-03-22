@@ -1,6 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  formatBookingCalendarDayHeader,
+  formatBookingDateTime,
+  formatBookingTimeRange,
+} from "../../lib/datetime/booking-display";
 
 type BookingSession = {
   id: string;
@@ -83,8 +88,8 @@ export function BookingSessionsView({ sessions }: BookingSessionsViewProps) {
             <tbody>
               {sessions.map((row) => (
                 <tr key={row.id}>
-                  <td>{new Date(row.sessionStart).toLocaleString()}</td>
-                  <td>{new Date(row.sessionEnd).toLocaleString()}</td>
+                  <td>{formatBookingDateTime(row.sessionStart)}</td>
+                  <td>{formatBookingDateTime(row.sessionEnd)}</td>
                   <td className="text-capitalize">{row.status}</td>
                 </tr>
               ))}
@@ -105,10 +110,7 @@ export function BookingSessionsView({ sessions }: BookingSessionsViewProps) {
                 />
                 {slotGrid.dates.map((date) => (
                   <th key={date} scope="col" style={{ lineHeight: "normal" }}>
-                    {new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
-                      day: "2-digit",
-                      month: "short",
-                    }).toUpperCase()}
+                    {formatBookingCalendarDayHeader(date)}
                   </th>
                 ))}
               </tr>
@@ -141,15 +143,7 @@ export function BookingSessionsView({ sessions }: BookingSessionsViewProps) {
                                 paddingBottom: "8px",
                               }}
                             >
-                              {new Date(session.sessionStart).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                              {" - "}
-                              {new Date(session.sessionEnd).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                              {formatBookingTimeRange(session.sessionStart, session.sessionEnd)}
                             </span>
                           ))}
                         </div>

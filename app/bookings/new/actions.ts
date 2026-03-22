@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getMarketplaceSession } from "../../../lib/auth/session";
+import { getMarketplaceViewRoleFromCookies, resolveInboxViewRole } from "../../../lib/auth/view-role";
 import { createAdminClient } from "../../../lib/supabase/admin";
 import {
   schoolCatalogRowToLocationData,
@@ -118,6 +119,22 @@ function hasOverlap(
   });
 }
 
+/** Only these parent booking statuses reserve the tutor's time for overlap checks (pending / changes_requested can overlap). */
+const BOOKING_STATUSES_THAT_BLOCK_NEW_REQUESTS = new Set(["accepted", "confirmed"]);
+
+type SessionRowWithBookingStatus = {
+  session_start: string;
+  session_end: string;
+  bookings: { status: string } | { status: string }[] | null;
+};
+
+function parentBookingStatusFromSessionRow(row: SessionRowWithBookingStatus): string | null {
+  const b = row.bookings;
+  if (!b) return null;
+  const status = Array.isArray(b) ? b[0]?.status : b.status;
+  return typeof status === "string" ? status.trim().toLowerCase() : null;
+}
+
 export async function createBookingRequest(
   _prevState: BookingFormState,
   formData: FormData,
@@ -131,6 +148,20 @@ export async function createBookingRequest(
   }
 
   const supabase = createAdminClient();
+  const { data: viewerTutorRow } = await supabase
+    .from("tutors")
+    .select("id")
+    .eq("user_id", session.sub)
+    .maybeSingle();
+  const hasTutorProfile = Boolean(viewerTutorRow);
+  const cookieRole = await getMarketplaceViewRoleFromCookies();
+  if (resolveInboxViewRole(session, { hasTutorProfile, cookieRole }) === "tutor") {
+    return {
+      error:
+        "You are viewing as Tutor. Switch to School admin via Choose role to create bookings.",
+    };
+  }
+
   const tutorUserId = String(formData.get("tutor_user_id") ?? "").trim();
   const schoolId = String(formData.get("school_id") ?? "").trim().toUpperCase();
   const bookingType = String(formData.get("booking_type") ?? "").trim();
@@ -237,7 +268,7 @@ export async function createBookingRequest(
 
   const { data: existingSessions, error: existingSessionsError } = await supabase
     .from("booking_sessions")
-    .select("session_start,session_end,status")
+    .select("session_start,session_end,status,bookings(status)")
     .eq("tutor_user_id", tutorUserId)
     .neq("status", "cancelled")
     .lt("session_start", latestEnd)
@@ -245,12 +276,23 @@ export async function createBookingRequest(
   if (existingSessionsError) {
     return { error: existingSessionsError.message };
   }
-  const collisionSet = (existingSessions ?? []) as Array<{ session_start: string; session_end: string }>;
+  const collisionSet = (existingSessions ?? [])
+    .filter((row) => {
+      const parentStatus = parentBookingStatusFromSessionRow(row as SessionRowWithBookingStatus);
+      return parentStatus != null && BOOKING_STATUSES_THAT_BLOCK_NEW_REQUESTS.has(parentStatus);
+    })
+    .map((row) => ({
+      session_start: row.session_start as string,
+      session_end: row.session_end as string,
+    }));
   const hasConflicts = sessionWindows.some((window) =>
     hasOverlap(collisionSet, window.startIso, window.endIso),
   );
   if (hasConflicts) {
-    return { error: "One or more requested sessions overlap an existing booking." };
+    return {
+      error:
+        "One or more requested sessions overlap a time that is already committed (accepted or confirmed booking).",
+    };
   }
 
   const { data: schoolCatalogRow, error: schoolCatalogError } = await supabase

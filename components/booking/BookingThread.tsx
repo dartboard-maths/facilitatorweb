@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import type { BookingActionState } from "../../app/bookings/actions";
+import { formatBookingDateTime } from "../../lib/datetime/booking-display";
 
 type BookingThreadMessage = {
   id: string;
@@ -50,7 +51,7 @@ export function BookingThread({ bookingId, messages, canPost, action }: BookingT
               <div key={message.id} className="border rounded p-2 bg-light-subtle">
                 <div className="small text-secondary mb-1">
                   <span className="fw-semibold">{roleLabel(message.senderRole)}</span> •{" "}
-                  {new Date(message.createdAt).toLocaleString()}
+                  {formatBookingDateTime(message.createdAt)}
                 </div>
                 <div className="small">{message.body}</div>
               </div>

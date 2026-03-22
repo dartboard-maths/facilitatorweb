@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookingInbox, type BookingInboxItem } from "../../components/booking/BookingInbox";
 import { getMarketplaceSession } from "../../lib/auth/session";
+import { getMarketplaceViewRoleFromCookies, resolveInboxViewRole } from "../../lib/auth/view-role";
 import { createAdminClient } from "../../lib/supabase/admin";
 
 type BookingsPageProps = {
@@ -10,7 +11,49 @@ type BookingsPageProps = {
   };
 };
 
-const ALLOWED_STATUSES = new Set(["pending", "changes_requested", "accepted", "declined"]);
+const ALLOWED_STATUSES = new Set([
+  "all",
+  "pending",
+  "changes_requested",
+  "accepted",
+  "declined",
+  "cancellation_requested",
+  "cancelled",
+]);
+
+/** In-workshop / live commitments — listed first on "All". */
+const ACTIVE_STATUSES = new Set(["accepted", "confirmed"]);
+const CANCELLED_STATUS = "cancelled";
+
+function sortByRecentActivity(a: BookingRow, b: BookingRow): number {
+  const ta = new Date(a.last_activity_at ?? a.created_at).getTime();
+  const tb = new Date(b.last_activity_at ?? b.created_at).getTime();
+  return tb - ta;
+}
+
+function partitionBookingsForAllView(rows: BookingRow[]): {
+  active: BookingRow[];
+  other: BookingRow[];
+  cancelled: BookingRow[];
+} {
+  const active: BookingRow[] = [];
+  const other: BookingRow[] = [];
+  const cancelled: BookingRow[] = [];
+  for (const row of rows) {
+    const s = row.status.trim().toLowerCase();
+    if (ACTIVE_STATUSES.has(s)) {
+      active.push(row);
+    } else if (s === CANCELLED_STATUS) {
+      cancelled.push(row);
+    } else {
+      other.push(row);
+    }
+  }
+  active.sort(sortByRecentActivity);
+  other.sort(sortByRecentActivity);
+  cancelled.sort(sortByRecentActivity);
+  return { active, other, cancelled };
+}
 
 type BookingRow = {
   id: string;
@@ -40,28 +83,44 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
     redirect("/sign-in?next=/bookings");
   }
 
-  const statusParam = String(searchParams?.status ?? "pending").toLowerCase();
-  const activeStatus = ALLOWED_STATUSES.has(statusParam) ? statusParam : "pending";
+  const statusParam = String(searchParams?.status ?? "all").toLowerCase();
+  const activeStatus = ALLOWED_STATUSES.has(statusParam) ? statusParam : "all";
 
   const supabase = createAdminClient();
-  const isTutorView = !session.isSchoolAdmin;
-  let bookingQuery = supabase
-    .from("bookings")
-    .select("id,status,booking_type,school_id,tutor_user_id,school_admin_user_id,created_at,last_activity_at")
-    .eq("status", activeStatus)
-    .order("last_activity_at", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(100);
 
-  if (isTutorView) {
-    bookingQuery = bookingQuery.eq("tutor_user_id", session.sub);
-  } else if (session.managedSchoolIds.length > 0) {
-    bookingQuery = bookingQuery.in("school_id", session.managedSchoolIds);
-  } else {
-    bookingQuery = bookingQuery.eq("school_admin_user_id", session.sub);
-  }
+  const { data: tutorRow } = await supabase
+    .from("tutors")
+    .select("id")
+    .eq("user_id", session.sub)
+    .maybeSingle();
+  const hasTutorProfile = Boolean(tutorRow);
+  const cookieRole = await getMarketplaceViewRoleFromCookies();
+  const inboxViewRole = resolveInboxViewRole(session, { hasTutorProfile, cookieRole });
+  const isTutorView = inboxViewRole === "tutor";
 
-  const { data: bookingRows, error: bookingError } = await bookingQuery;
+  const baseBookingsQuery = () => {
+    let q = supabase
+      .from("bookings")
+      .select("id,status,booking_type,school_id,tutor_user_id,school_admin_user_id,created_at,last_activity_at")
+      .order("last_activity_at", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (activeStatus !== "all") {
+      q = q.eq("status", activeStatus);
+    }
+
+    if (isTutorView) {
+      q = q.eq("tutor_user_id", session.sub);
+    } else if (session.managedSchoolIds.length > 0) {
+      q = q.in("school_id", session.managedSchoolIds);
+    } else {
+      q = q.eq("school_admin_user_id", session.sub);
+    }
+    return q;
+  };
+
+  const { data: bookingRows, error: bookingError } = await baseBookingsQuery();
   if (bookingError) {
     return (
       <main className="container py-5">
@@ -81,7 +140,7 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
     : { data: [] };
   const usersById = new Map((userRows ?? []).map((row) => [row.id, row as UserRow]));
 
-  const items: BookingInboxItem[] = bookings.map((row) => ({
+  const rowToItem = (row: BookingRow): BookingInboxItem => ({
     id: row.id,
     status: row.status,
     bookingType: row.booking_type,
@@ -90,7 +149,21 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
     schoolAdminName: displayName(usersById.get(row.school_admin_user_id)),
     createdAt: row.created_at,
     lastActivityAt: row.last_activity_at ?? row.created_at,
-  }));
+  });
+
+  const items: BookingInboxItem[] = bookings.map(rowToItem);
+
+  const grouped =
+    activeStatus === "all"
+      ? (() => {
+          const { active, other, cancelled } = partitionBookingsForAllView(bookings);
+          return {
+            active: active.map(rowToItem),
+            other: other.map(rowToItem),
+            cancelled: cancelled.map(rowToItem),
+          };
+        })()
+      : null;
 
   return (
     <main className="container py-5">
@@ -127,7 +200,12 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
         </Link>
       </div>
 
-      <BookingInbox role={isTutorView ? "tutor" : "school_admin"} activeStatus={activeStatus} items={items} />
+      <BookingInbox
+        role={isTutorView ? "tutor" : "school_admin"}
+        activeStatus={activeStatus}
+        items={items}
+        grouped={grouped}
+      />
     </main>
   );
 }

@@ -50,10 +50,16 @@ export default async function RoleSelectPage() {
                     Create or update your tutor profile, availability, rates, and location.
                   </p>
                   <div className="d-grid gap-2 mt-auto">
-                    <Link href="/tutors/new" className="btn btn-primary">
+                    <Link
+                      href="/api/auth/view-role?role=tutor&next=%2Ftutors%2Fnew"
+                      className="btn btn-primary"
+                    >
                       Edit tutor profile
                     </Link>
-                    <Link href="/bookings" className="btn btn-outline-primary">
+                    <Link
+                      href="/api/auth/view-role?role=tutor&next=%2Fbookings"
+                      className="btn btn-outline-primary"
+                    >
                       View booking requests
                     </Link>
                   </div>
@@ -70,10 +76,16 @@ export default async function RoleSelectPage() {
                       Browse tutors as a school admin and create bookings for your managed schools.
                     </p>
                     <div className="d-grid gap-2 mt-auto">
-                      <Link href="/tutors" className="btn btn-outline-primary">
+                      <Link
+                        href="/api/auth/view-role?role=school_admin&next=%2Ftutors"
+                        className="btn btn-outline-primary"
+                      >
                         Open school admin tools
                       </Link>
-                      <Link href="/bookings" className="btn btn-outline-secondary">
+                      <Link
+                        href="/api/auth/view-role?role=school_admin&next=%2Fbookings"
+                        className="btn btn-outline-secondary"
+                      >
                         Booking inbox
                       </Link>
                     </div>
