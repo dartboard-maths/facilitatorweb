@@ -17,7 +17,7 @@ export default async function HomePage() {
             width={420}
             height={390}
             priority
-            className="mb-3"
+            className="mb-3 img-fluid"
           />
           <h1 className="display-5 fw-semibold mb-2">Edu Placement</h1>
           <p className="text-secondary mb-4">
