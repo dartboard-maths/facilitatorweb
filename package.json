@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "contentful:bootstrap": "node scripts/contentful/bootstrap-marketplace-cms.mjs",
+    "contentful:bootstrap:dry-run": "node scripts/contentful/bootstrap-marketplace-cms.mjs --dry-run",
+    "contentful:bootstrap:schema": "node scripts/contentful/bootstrap-marketplace-cms.mjs --schema-only",
+    "contentful:bootstrap:seed": "node scripts/contentful/bootstrap-marketplace-cms.mjs --seed-only"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
