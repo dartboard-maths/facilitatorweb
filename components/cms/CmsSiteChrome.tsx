@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { CmsFooter, CmsHeader, CmsLink, CmsRenderContext } from "../../lib/cms/contentful";
 import { toParagraphs } from "../../lib/cms/contentful";
