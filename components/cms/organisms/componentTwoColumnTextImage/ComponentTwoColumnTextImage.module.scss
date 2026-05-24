@@ -1,0 +1,122 @@
+.twoColumn {
+  position: relative;
+  padding: 3rem 1rem;
+}
+
+.twoColumn__imageWrapper {
+  position: relative;
+  width: 100%;
+  min-height: 300px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.twoColumn__image {
+  position: absolute;
+  inset: 0;
+}
+
+.twoColumn__svgOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.twoColumn__textContent {
+  position: relative;
+  z-index: 2;
+}
+
+.twoColumn__title {
+  margin-bottom: 1rem;
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.twoColumn__introCopy {
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+  line-height: 1.65;
+}
+
+.twoColumn__copyParagraph {
+  margin: 0 0 1rem;
+  line-height: 1.75;
+}
+
+.twoColumn__copyParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.twoColumn__copyHeading1,
+.twoColumn__copyHeading2,
+.twoColumn__copyHeading3,
+.twoColumn__copyHeading4,
+.twoColumn__copyHeading5,
+.twoColumn__copyHeading6 {
+  margin: 1.25rem 0 0.75rem;
+}
+
+.twoColumn__copyList,
+.twoColumn__copyOrderedList {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.twoColumn__copyListItem {
+  margin-bottom: 0.5rem;
+}
+
+.twoColumn__copyQuote {
+  border-left: 4px solid currentcolor;
+  margin: 1rem 0;
+  opacity: 0.8;
+  padding-left: 1rem;
+}
+
+.twoColumn__copyHr {
+  margin: 1.5rem 0;
+}
+
+.twoColumn__copyLink {
+  text-decoration: underline;
+}
+
+.twoColumn__copyBold {
+  font-weight: 700;
+}
+
+.twoColumn__copyCode {
+  border-radius: 0.25rem;
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  padding: 0.05rem 0.35rem;
+}
+
+.twoColumn__ctaWrapper {
+  margin-top: 1.5rem;
+}
+
+.twoColumn__cta {
+  border: 1px solid currentcolor;
+  display: inline-flex;
+  font-weight: 600;
+  padding: 0.65rem 1.25rem;
+  text-decoration: none;
+}
+
+.twoColumn__cta:hover,
+.twoColumn__cta:focus-visible {
+  opacity: 0.9;
+}
+
+.twoColumn--dark {
+  color: #fff;
+}
+
+.twoColumn--light {
+  color: #111827;
+}
