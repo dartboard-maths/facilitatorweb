@@ -223,12 +223,52 @@ export type CmsListBlock = {
   };
 };
 
+export type CmsTwoColumnTextImage = {
+  type: "componentTwoColumnTextImage";
+  id: string;
+  data: {
+    title: string;
+    introCopy: string;
+    copy?: CmsRichTextDocument;
+    image?: CmsImage;
+    imageSvgOverlay: string;
+    ctaLabel: string;
+    ctaUrl: string;
+    ctaCustomClass: string;
+    imageOnLeft: boolean;
+    blockTheme?: CmsBlockTheme;
+  };
+};
+
+export type CmsTwoColumnImageCopyList = {
+  type: "componentTwoColumnImageCopyList";
+  id: string;
+  data: {
+    preTitle: string;
+    title: string;
+    image?: CmsImage;
+    imageLeft: boolean;
+    copy?: CmsRichTextDocument;
+    list?: CmsListBlock["data"];
+    blockTheme?: CmsBlockTheme;
+  };
+};
+
+export type CmsHeaderComponent = {
+  type: "componentHeader";
+  id: string;
+  data: CmsHeader;
+};
+
 export type CmsSupportedComponent =
   | CmsHeroBanner
   | CmsBodyCopy
   | CmsCardGrid
   | CmsTitleBodyCta
-  | CmsListBlock;
+  | CmsListBlock
+  | CmsTwoColumnTextImage
+  | CmsTwoColumnImageCopyList
+  | CmsHeaderComponent;
 
 export type CmsPage = {
   id: string;
@@ -678,6 +718,24 @@ function transformListItem(entry: ContentfulEntry | undefined, maps: ResolvedMap
   };
 }
 
+function transformListBlockData(entry: ContentfulEntry | undefined, maps: ResolvedMaps): CmsListBlock["data"] | undefined {
+  if (!entry || contentTypeId(entry) !== "componentListBlock") {
+    return undefined;
+  }
+
+  const blockThemeEntry = resolveEntryLink(entry.fields?.blockTheme, maps);
+  const listItems = resolveEntryArray(entry.fields?.listItems, maps)
+    .map((listItemEntry) => transformListItem(listItemEntry, maps))
+    .filter((listItem): listItem is CmsListItem => Boolean(listItem));
+
+  return {
+    title: getField<string>(entry, "title") || "",
+    copy: getField<string>(entry, "copy") || "",
+    listItems,
+    blockTheme: transformBlockTheme(blockThemeEntry, maps),
+  };
+}
+
 function transformComponent(entry: ContentfulEntry | undefined, maps: ResolvedMaps): CmsSupportedComponent | undefined {
   if (!entry) {
     return undefined;
@@ -756,20 +814,80 @@ function transformComponent(entry: ContentfulEntry | undefined, maps: ResolvedMa
   }
 
   if (componentId === "componentListBlock") {
-    const blockThemeEntry = resolveEntryLink(entry.fields?.blockTheme, maps);
-    const listItems = resolveEntryArray(entry.fields?.listItems, maps)
-      .map((listItemEntry) => transformListItem(listItemEntry, maps))
-      .filter((listItem): listItem is CmsListItem => Boolean(listItem));
+    const listBlockData = transformListBlockData(entry, maps);
 
     return {
       type: "componentListBlock",
       id: entry.sys.id,
+      data: listBlockData || {
+        title: "",
+        copy: "",
+        listItems: [],
+      },
+    };
+  }
+
+  if (componentId === "componentTwoColumnTextImage") {
+    const blockThemeEntry = resolveEntryLink(entry.fields?.blockTheme, maps);
+    const ctaEntry = resolveEntryLink(entry.fields?.cta, maps);
+    const ctaLink = transformSubcomponentLink(ctaEntry, maps);
+    const introCopyRichText = richTextToPlainText(entry.fields?.introCopy);
+
+    return {
+      type: "componentTwoColumnTextImage",
+      id: entry.sys.id,
       data: {
         title: getField<string>(entry, "title") || "",
-        copy: getField<string>(entry, "copy") || "",
-        listItems,
+        introCopy: getField<string>(entry, "introCopy") || introCopyRichText,
+        copy: getRichTextDocument(entry.fields?.copy),
+        image: transformAssetToImage(resolveAssetLink(entry.fields?.image, maps)),
+        imageSvgOverlay:
+          getField<string>(entry, "imageSvgOverlay") ||
+          getField<string>(entry, "imageSvgCode") ||
+          getField<string>(entry, "svgOverlay") ||
+          "",
+        ctaLabel: getField<string>(entry, "ctaLabel") || ctaLink?.label || "",
+        ctaUrl: getField<string>(entry, "ctaUrl") || ctaLink?.url || "",
+        ctaCustomClass: getField<string>(entry, "ctaCustomClass") || ctaLink?.customClass || "",
+        imageOnLeft: getField<boolean>(entry, "imageOnLeft") ?? true,
         blockTheme: transformBlockTheme(blockThemeEntry, maps),
       },
+    };
+  }
+
+  if (componentId === "componentTwoColumnImageCopyList") {
+    const blockThemeEntry = resolveEntryLink(entry.fields?.blockTheme, maps);
+    const linkedListEntry =
+      resolveEntryLink(entry.fields?.list, maps) ||
+      resolveEntryLink(entry.fields?.listBlock, maps);
+
+    const linkedListData = transformListBlockData(linkedListEntry, maps);
+
+    return {
+      type: "componentTwoColumnImageCopyList",
+      id: entry.sys.id,
+      data: {
+        preTitle: getField<string>(entry, "preTitle") || "",
+        title: getField<string>(entry, "title") || "",
+        image: transformAssetToImage(resolveAssetLink(entry.fields?.image, maps)),
+        imageLeft: getField<boolean>(entry, "imageLeft") ?? getField<boolean>(entry, "imageOnLeft") ?? true,
+        copy: getRichTextDocument(entry.fields?.copy),
+        list: linkedListData,
+        blockTheme: transformBlockTheme(blockThemeEntry, maps),
+      },
+    };
+  }
+
+  if (componentId === "componentHeader") {
+    const headerData = transformHeader(entry, maps);
+    if (!headerData) {
+      return undefined;
+    }
+
+    return {
+      type: "componentHeader",
+      id: entry.sys.id,
+      data: headerData,
     };
   }
 

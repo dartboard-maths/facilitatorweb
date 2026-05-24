@@ -62,7 +62,7 @@ function FallbackHome({ roleHomeHref, roleHomeLabel }: HomeRoleNavProps) {
 export default async function HomePage() {
   const session = await getMarketplaceSession();
   const roleHomeHref = session ? "/role-select" : "/sign-in";
-  const roleHomeLabel = session ? "Profile" : "Sign in";
+  const roleHomeLabel = session ? "View Profile" : "Sign in";
   const renderContext = {
     contextualLinks: {
       "#sign-in": {

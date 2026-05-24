@@ -43,8 +43,8 @@ type AddressFeature = {
 };
 
 const FALLBACK_COORDINATES: Coordinates = {
-  latitude: 37.7749,
-  longitude: -122.4194,
+  latitude: -33.9249,
+  longitude: 18.4241,
 };
 
 function zoomForDistanceKm(distanceKm: number): number {
