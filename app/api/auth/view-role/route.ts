@@ -10,6 +10,10 @@ function safeNextPath(next: string | null): string {
   return next;
 }
 
+function shouldUseSecureCookies(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
 export async function GET(request: NextRequest) {
   const session = await getMarketplaceSession();
   if (!session) {
@@ -47,7 +51,7 @@ export async function GET(request: NextRequest) {
 
   response.cookies.set(MARKETPLACE_VIEW_ROLE_COOKIE, parsed, {
     httpOnly: true,
-    secure: true,
+    secure: shouldUseSecureCookies(),
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 180,

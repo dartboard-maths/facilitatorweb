@@ -4,6 +4,10 @@ import { MARKETPLACE_VIEW_ROLE_COOKIE } from "./view-role";
 
 const SESSION_COOKIE_NAME = "marketplace_session";
 
+function shouldUseSecureCookies(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
 type MarketplaceSessionPayload = {
   sub: string;
   email: string;
@@ -86,7 +90,7 @@ export async function setMarketplaceSession(input: {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, `${encoded}.${signature}`, {
     httpOnly: true,
-    secure: true,
+    secure: shouldUseSecureCookies(),
     sameSite: "lax",
     path: "/",
     maxAge: maxAgeSeconds,
