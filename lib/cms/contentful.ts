@@ -949,6 +949,23 @@ async function fetchEntryByContentTypeAndKey(contentType: string, key: string): 
   };
 }
 
+async function fetchEntryByContentTypeAndId(contentType: string, id: string): Promise<{ entry: ContentfulEntry; maps: ResolvedMaps } | null> {
+  const payload = await fetchEntriesFromContentful({
+    content_type: contentType,
+    "sys.id": id,
+  });
+
+  if (!payload || !payload.items.length) {
+    return null;
+  }
+
+  const maps = buildResolvedMaps(payload);
+  return {
+    entry: payload.items[0],
+    maps,
+  };
+}
+
 export async function getCmsPageBySlug(slug: string): Promise<CmsPage | null> {
   const payload = await fetchEntriesFromContentful({
     content_type: "page",
@@ -982,9 +999,18 @@ export async function getCmsPageBySlug(slug: string): Promise<CmsPage | null> {
 }
 
 export async function getCmsGlobalSettings(): Promise<CmsGlobalSettings | null> {
-  const current = await fetchEntryByContentTypeAndKey("globalSettings", "default");
+  let current = await fetchEntryByContentTypeAndKey("globalSettings", "default");
   if (!current) {
-    return null;
+    const fallbackPayload = await fetchEntriesFromContentful({
+      content_type: "globalSettings",
+    });
+    if (!fallbackPayload || fallbackPayload.items.length === 0) {
+      return null;
+    }
+    current = {
+      entry: fallbackPayload.items[0],
+      maps: buildResolvedMaps(fallbackPayload),
+    };
   }
 
   const { entry, maps } = current;
@@ -998,6 +1024,21 @@ export async function getCmsGlobalSettings(): Promise<CmsGlobalSettings | null> 
     header: transformHeader(headerEntry, maps),
     footer: transformFooter(footerEntry, maps),
   };
+}
+
+export async function getCmsFooterById(footerId: string): Promise<CmsFooter | null> {
+  const normalizedFooterId = footerId.trim();
+  if (!normalizedFooterId) {
+    return null;
+  }
+
+  const current = await fetchEntryByContentTypeAndId("componentFooter", normalizedFooterId);
+  if (!current) {
+    return null;
+  }
+
+  const { entry, maps } = current;
+  return transformFooter(entry, maps) || null;
 }
 
 export function isReservedMarketingSlug(slug: string): boolean {

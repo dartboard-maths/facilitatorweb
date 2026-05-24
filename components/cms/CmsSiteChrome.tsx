@@ -1,10 +1,7 @@
 import Link from "next/link";
-import type { CmsFooter, CmsHeader, CmsLink, CmsMenuItem } from "../../lib/cms/contentful";
+import type { CmsFooter, CmsHeader, CmsLink, CmsRenderContext } from "../../lib/cms/contentful";
 import { toParagraphs } from "../../lib/cms/contentful";
-
-type CmsSiteHeaderProps = {
-  header?: CmsHeader;
-};
+import CmsSiteHeaderClient from "./CmsSiteHeaderClient";
 
 type CmsSiteFooterProps = {
   footer?: CmsFooter;
@@ -38,50 +35,8 @@ function CmsLinkItem({ link, className }: { link: CmsLink; className: string }) 
   );
 }
 
-function HeaderMenuItem({ item }: { item: CmsMenuItem }) {
-  if (item.kind === "link") {
-    return <CmsLinkItem link={item} className="text-decoration-none text-secondary" />;
-  }
-
-  if (!item.links.length) {
-    return null;
-  }
-
-  return (
-    <div className="dropdown">
-      <button className="btn btn-link dropdown-toggle text-decoration-none text-secondary p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-        {item.title}
-      </button>
-      <ul className="dropdown-menu">
-        {item.links.map((subLink) => (
-          <li key={subLink.id}>
-            <CmsLinkItem link={subLink} className="dropdown-item" />
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export function CmsSiteHeader({ header }: CmsSiteHeaderProps) {
-  if (!header) {
-    return null;
-  }
-
-  return (
-    <header className="bg-white border-bottom">
-      <div className="container py-3 d-flex flex-column flex-lg-row gap-3 align-items-lg-center">
-        <Link href="/" className="fw-semibold text-decoration-none text-dark">
-          {header.title || "Edu Placement"}
-        </Link>
-        <nav className="d-flex flex-wrap gap-3 ms-lg-auto align-items-center" aria-label="Primary navigation">
-          {header.menu?.links.map((item) => (
-            <HeaderMenuItem key={item.id} item={item} />
-          ))}
-        </nav>
-      </div>
-    </header>
-  );
+export function CmsSiteHeader({ header, renderContext }: { header?: CmsHeader; renderContext?: CmsRenderContext }) {
+  return <CmsSiteHeaderClient header={header} renderContext={renderContext} />;
 }
 
 function FooterMenuItem({ link }: { link: CmsLink }) {
@@ -94,7 +49,7 @@ export function CmsSiteFooter({ footer }: CmsSiteFooterProps) {
   }
 
   return (
-    <footer className="bg-dark text-light mt-5">
+    <footer className="bg-dark text-light">
       <div className="container py-5">
         {footer.title ? <h2 className="h5 mb-3">{footer.title}</h2> : null}
         {toParagraphs(footer.copy).map((paragraph, index) => (

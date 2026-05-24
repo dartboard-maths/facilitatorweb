@@ -6,10 +6,10 @@ type ComponentHeaderProps = {
   renderContext?: CmsRenderContext;
 };
 
-export default function ComponentHeader({ data }: ComponentHeaderProps) {
+export default function ComponentHeader({ data, renderContext }: ComponentHeaderProps) {
   if (!data) {
     return null;
   }
 
-  return <CmsSiteHeader header={data} />;
+  return <CmsSiteHeader header={data} renderContext={renderContext} />;
 }

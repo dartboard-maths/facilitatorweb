@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookingInbox, type BookingInboxItem } from "../../components/booking/BookingInbox";
+import { CmsPageRenderer } from "../../components/cms/CmsPageRenderer";
 import { getMarketplaceSession } from "../../lib/auth/session";
+import { getCmsPageBySlug } from "../../lib/cms/contentful";
 import { getMarketplaceViewRoleFromCookies, resolveInboxViewRole } from "../../lib/auth/view-role";
 import { createAdminClient } from "../../lib/supabase/admin";
 
@@ -82,6 +84,15 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
   if (!session) {
     redirect("/sign-in?next=/bookings");
   }
+  const cmsBookingsPage = await getCmsPageBySlug("bookings");
+  const renderContext = {
+    contextualLinks: {
+      "#sign-in": {
+        href: "/role-select",
+        label: "View Profile",
+      },
+    },
+  };
 
   const statusParam = String(searchParams?.status ?? "all").toLowerCase();
   const activeStatus = ALLOWED_STATUSES.has(statusParam) ? statusParam : "all";
@@ -123,10 +134,15 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
   const { data: bookingRows, error: bookingError } = await baseBookingsQuery();
   if (bookingError) {
     return (
-      <main className="container py-5">
-        <div className="alert alert-danger" role="alert">
-          {bookingError.message}
-        </div>
+      <main>
+        {cmsBookingsPage?.components?.length ? (
+          <CmsPageRenderer components={cmsBookingsPage.components} renderContext={renderContext} />
+        ) : null}
+        <section className="container py-5">
+          <div className="alert alert-danger" role="alert">
+            {bookingError.message}
+          </div>
+        </section>
       </main>
     );
   }
@@ -166,46 +182,45 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
       : null;
 
   return (
-    <main className="container py-5">
-      <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
-        <Link href="/" className="btn btn-link px-0">
-          Home
-        </Link>
-        <Link href="/tutors" className="btn btn-link px-0">
-          Tutors
-        </Link>
-        <Link href="/bookings" className="btn btn-link px-0">
-          Bookings
-        </Link>
-        <div className="ms-auto d-flex align-items-center gap-2">
-          <Link href="/role-select" className="btn btn-outline-secondary btn-sm">
-            Choose role
+    <main>
+      {cmsBookingsPage?.components?.length ? (
+        <CmsPageRenderer components={cmsBookingsPage.components} renderContext={renderContext} />
+      ) : null}
+      <section className="container py-5">
+        <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
+          <Link href="/bookings" className="btn btn-outline-secondary btn-sm">
+            Bookings
           </Link>
-          <form action="/api/auth/sign-out" method="post">
-            <button type="submit" className="btn btn-outline-secondary btn-sm">
-              Sign out
-            </button>
-          </form>
+          <div className="ms-auto d-flex align-items-center gap-2">
+            <Link href="/role-select" className="btn btn-outline-secondary btn-sm">
+              Choose role
+            </Link>
+            <form action="/api/auth/sign-out" method="post">
+              <button type="submit" className="btn btn-outline-secondary btn-sm">
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div>
-          <h1 className="h3 mb-1">Bookings</h1>
-          <p className="text-secondary mb-0">
-            {isTutorView ? "Review booking requests from schools." : "Review and manage school booking requests."}
-          </p>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h1 className="h3 mb-1">Bookings</h1>
+            <p className="text-secondary mb-0">
+              {isTutorView ? "Review booking requests from schools." : "Review and manage school booking requests."}
+            </p>
+          </div>
+          <Link href="/role-select" className="btn btn-outline-secondary btn-sm">
+            Back to roles
+          </Link>
         </div>
-        <Link href="/role-select" className="btn btn-outline-secondary btn-sm">
-          Back to roles
-        </Link>
-      </div>
 
-      <BookingInbox
-        role={isTutorView ? "tutor" : "school_admin"}
-        activeStatus={activeStatus}
-        items={items}
-        grouped={grouped}
-      />
+        <BookingInbox
+          role={isTutorView ? "tutor" : "school_admin"}
+          activeStatus={activeStatus}
+          items={items}
+          grouped={grouped}
+        />
+      </section>
     </main>
   );
 }

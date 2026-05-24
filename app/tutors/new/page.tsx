@@ -68,13 +68,7 @@ export default async function NewTutorProfilePage() {
       <div className="row justify-content-center">
         <div className="col-12 col-lg-10 col-xl-9">
           <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
-            <Link href="/" className="btn btn-link px-0">
-              Home
-            </Link>
-            <Link href="/tutors" className="btn btn-link px-0">
-              Tutors
-            </Link>
-            <Link href="/bookings" className="btn btn-link px-0">
+            <Link href="/bookings" className="btn btn-outline-secondary btn-sm">
               Bookings
             </Link>
             <div className="ms-auto d-flex align-items-center gap-2">
@@ -90,6 +84,7 @@ export default async function NewTutorProfilePage() {
           </div>
           <TutorProfileForm
             action={createTutorProfile}
+            hasExistingProfile={Boolean(existingTutor)}
             initialName={session.name ?? ""}
             initialFirstName={resolvedFirstName}
             initialLastName={resolvedLastName}
