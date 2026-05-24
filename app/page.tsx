@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CmsPageRenderer } from "../components/cms/CmsPageRenderer";
-import { CmsSiteFooter, CmsSiteHeader } from "../components/cms/CmsSiteChrome";
+import { CmsSiteHeader } from "../components/cms/CmsSiteChrome";
 import { getMarketplaceSession } from "../lib/auth/session";
 import { getCmsGlobalSettings, getCmsPageBySlug } from "../lib/cms/contentful";
 
@@ -83,11 +83,10 @@ export default async function HomePage() {
 
   return (
     <>
-      <CmsSiteHeader header={globalSettings?.header} />
+      <CmsSiteHeader header={globalSettings?.header} renderContext={renderContext} />
       <main>
         <CmsPageRenderer components={homePage.components} renderContext={renderContext} />
       </main>
-      <CmsSiteFooter footer={globalSettings?.footer} />
     </>
   );
 }

@@ -35,6 +35,7 @@ type TutorProfileFormProps = {
   }>;
   initialAvailabilityTimezone?: string;
   initialBlockedDates?: string;
+  hasExistingProfile?: boolean;
 };
 
 const initialState: TutorProfileFormState = {};
@@ -90,6 +91,7 @@ export function TutorProfileForm({
   initialWeeklyAvailability = [],
   initialAvailabilityTimezone = "UTC",
   initialBlockedDates = "",
+  hasExistingProfile = false,
 }: TutorProfileFormProps) {
   const normalizedInitialLng =
     Number.isFinite(initialLongitude) && initialLongitude !== null ? initialLongitude : defaultCenter.lng;
@@ -141,6 +143,10 @@ export function TutorProfileForm({
     return map;
   }, [initialWeeklyAvailability]);
   const effectivePhotoUrl = formState.photoUrl ?? initialPhotoUrl ?? moodlePhotoUrl ?? null;
+  const formTitle = hasExistingProfile ? "Edit Tutor Profile" : "Create Tutor Profile";
+  const formSubtitle = hasExistingProfile
+    ? "Update your teaching profile, rates, availability, and map location."
+    : "Add your teaching profile, set your rates, and pin your map location.";
   const headerInitials = useMemo(() => {
     const first = initialFirstName.trim()[0] ?? "";
     const last = initialLastName.trim()[0] ?? "";
@@ -333,9 +339,9 @@ export function TutorProfileForm({
           </div>
         )}
         <div>
-          <h1 className="mb-1">Create Tutor Profile</h1>
+          <h1 className="mb-1">{formTitle}</h1>
           <p className="text-secondary mb-0">
-            Add your teaching profile, set your rates, and pin your map location.
+            {formSubtitle}
           </p>
         </div>
       </div>

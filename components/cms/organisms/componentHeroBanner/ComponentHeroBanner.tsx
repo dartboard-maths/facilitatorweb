@@ -25,8 +25,20 @@ export default function ComponentHeroBanner({ data, renderContext }: ComponentHe
     "--hero-overlay-color": data.blockTheme?.backgroundColor || "#ca723899",
   } as CSSProperties;
 
+  const heroClassNames = [styles.heroBanner];
+  for (const cls of [data.blockTheme?.blockClass, data.blockTheme?.blockClass2]) {
+    if (!cls) {
+      continue;
+    }
+    const moduleClass = styles[`heroBanner--${cls}`];
+    if (moduleClass) {
+      heroClassNames.push(moduleClass);
+    }
+    heroClassNames.push(cls);
+  }
+
   return (
-    <section className={styles.heroBanner} style={styleVars}>
+    <section className={heroClassNames.join(" ")} style={styleVars}>
       {data.backgroundImage?.url ? (
         <div className={styles.heroBanner__background}>
           <Image

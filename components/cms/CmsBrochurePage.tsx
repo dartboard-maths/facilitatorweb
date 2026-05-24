@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CmsPageRenderer } from "./CmsPageRenderer";
-import { CmsSiteFooter, CmsSiteHeader } from "./CmsSiteChrome";
+import { CmsSiteHeader } from "./CmsSiteChrome";
+import { getMarketplaceSession } from "../../lib/auth/session";
 import { getCmsGlobalSettings, getCmsPageBySlug } from "../../lib/cms/contentful";
 
 type CmsBrochurePageProps = {
@@ -22,10 +23,22 @@ export async function buildCmsBrochureMetadata(slug: string): Promise<Metadata> 
 }
 
 export async function CmsBrochurePage({ slug }: CmsBrochurePageProps) {
-  const [page, globalSettings] = await Promise.all([
+  const [page, globalSettings, session] = await Promise.all([
     getCmsPageBySlug(slug),
     getCmsGlobalSettings(),
+    getMarketplaceSession(),
   ]);
+
+  const roleHomeHref = session ? "/role-select" : "/sign-in";
+  const roleHomeLabel = session ? "View Profile" : "Sign in";
+  const renderContext = {
+    contextualLinks: {
+      "#sign-in": {
+        href: roleHomeHref,
+        label: roleHomeLabel,
+      },
+    },
+  };
 
   if (!page) {
     notFound();
@@ -33,11 +46,10 @@ export async function CmsBrochurePage({ slug }: CmsBrochurePageProps) {
 
   return (
     <>
-      <CmsSiteHeader header={globalSettings?.header} />
+      <CmsSiteHeader header={globalSettings?.header} renderContext={renderContext} />
       <main>
-        <CmsPageRenderer components={page.components} />
+        <CmsPageRenderer components={page.components} renderContext={renderContext} />
       </main>
-      <CmsSiteFooter footer={globalSettings?.footer} />
     </>
   );
 }

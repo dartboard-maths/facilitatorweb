@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMarketplaceSession } from "../../../../lib/auth/session";
-import { createAdminClient } from "../../../../lib/supabase/admin";
 import { MARKETPLACE_VIEW_ROLE_COOKIE, parseMarketplaceViewRole } from "../../../../lib/auth/view-role";
 
 function safeNextPath(next: string | null): string {
@@ -8,6 +7,10 @@ function safeNextPath(next: string | null): string {
     return "/bookings";
   }
   return next;
+}
+
+function shouldUseSecureCookies(): boolean {
+  return process.env.NODE_ENV === "production";
 }
 
 export async function GET(request: NextRequest) {
@@ -26,18 +29,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const supabase = createAdminClient();
-  const { data: tutorRow } = await supabase
-    .from("tutors")
-    .select("id")
-    .eq("user_id", session.sub)
-    .maybeSingle();
-
-  const hasTutorProfile = Boolean(tutorRow);
-
-  if (parsed === "tutor" && !hasTutorProfile) {
-    return NextResponse.redirect(new URL("/role-select", request.nextUrl.origin));
-  }
   if (parsed === "school_admin" && !session.isSchoolAdmin) {
     return NextResponse.redirect(new URL("/role-select", request.nextUrl.origin));
   }
@@ -47,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   response.cookies.set(MARKETPLACE_VIEW_ROLE_COOKIE, parsed, {
     httpOnly: true,
-    secure: true,
+    secure: shouldUseSecureCookies(),
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 180,

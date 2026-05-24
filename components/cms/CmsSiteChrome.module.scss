@@ -1,0 +1,115 @@
+.siteHeader {
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  position: sticky;
+  top: 0;
+  transition: box-shadow 0.25s ease;
+  width: 100%;
+  z-index: 1000;
+}
+
+.siteHeader--scrolled {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.siteHeader--hidden {
+  transform: translateY(-100%);
+}
+
+.siteHeader__container {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  min-height: 76px;
+  padding: 0.75rem 0;
+}
+
+.siteHeader__logoLink {
+  align-items: center;
+  color: #0f172a;
+  display: inline-flex;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.siteHeader__logoImage {
+  display: block;
+  height: 48px;
+  object-fit: contain;
+  width: auto;
+}
+
+.siteHeader__nav {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.siteHeader__link {
+  color: #1f2937;
+  font-size: 0.98rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.siteHeader__link:hover,
+.siteHeader__link:focus-visible {
+  color: #1f2937;
+  opacity: 0.78;
+}
+
+.siteHeader__dropdown {
+  position: relative;
+}
+
+.siteHeader__dropdownToggle {
+  background: transparent;
+  border: 0;
+  color: #1f2937;
+  font-size: 0.98rem;
+  font-weight: 500;
+  padding: 0;
+  text-decoration: none;
+}
+
+.siteHeader__dropdownToggle:hover,
+.siteHeader__dropdownToggle:focus-visible {
+  color: #1f2937;
+  opacity: 0.78;
+}
+
+.siteHeader__dropdownMenu {
+  border-radius: 0.5rem;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  min-width: 12rem;
+}
+
+.siteHeader__dropdownItem {
+  color: #1f2937;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.siteHeader__dropdownItem:hover,
+.siteHeader__dropdownItem:focus-visible {
+  color: #111827;
+}
+
+@media (max-width: 991.98px) {
+  .siteHeader__container {
+    align-items: flex-start;
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .siteHeader__nav {
+    margin-left: 0;
+    width: 100%;
+  }
+}

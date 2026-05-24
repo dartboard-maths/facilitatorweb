@@ -5,6 +5,18 @@
   overflow: hidden;
 }
 
+.heroBanner--page-hero {
+  margin-top: 0 !important;
+  max-height: 300px;
+  min-height: 300px !important;
+}
+
+.heroBanner--page-hero .heroBanner__content {
+  height: 300px;
+  min-height: 300px !important;
+  padding: 1.5rem 0;
+}
+
 .heroBanner__background {
   position: absolute;
   inset: 0;
@@ -148,6 +160,18 @@
     margin-left: auto;
     margin-right: auto;
   }
+
+  .heroBanner--page-hero {
+    margin-top: 0 !important;
+    max-height: 300px;
+    min-height: 300px !important;
+  }
+
+  .heroBanner--page-hero .heroBanner__content {
+    height: 300px;
+    min-height: 300px !important;
+    padding-top: 1.5rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -176,5 +200,17 @@
 
   .heroBanner__copyHeading1 {
     line-height: 3.125rem;
+  }
+
+  .heroBanner--page-hero {
+    margin-top: 0 !important;
+    max-height: 300px;
+    min-height: 300px !important;
+  }
+
+  .heroBanner--page-hero .heroBanner__content {
+    height: 300px;
+    min-height: 300px !important;
+    padding: 2rem 0;
   }
 }
