@@ -103,6 +103,7 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [distanceKm, setDistanceKm] = useState<number>(initialRadiusKm);
   const [addressQuery, setAddressQuery] = useState("");
+  const suppressedAddressQueryRef = useRef<string | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
   const [addressSuggestions, setAddressSuggestions] = useState<AddressFeature[]>([]);
@@ -259,6 +260,7 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
     if (focus) {
       setUserLocation({ latitude: focus.latitude, longitude: focus.longitude });
       if (focus.name) {
+        suppressedAddressQueryRef.current = focus.name;
         setAddressQuery(focus.name);
       }
       return;
@@ -423,8 +425,9 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
 
   useEffect(() => {
     const query = addressQuery.trim();
-    if (!query || !mapboxToken) {
+    if (!query || !mapboxToken || suppressedAddressQueryRef.current === query) {
       setAddressSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
@@ -538,6 +541,7 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
                 className="form-control"
                 value={addressQuery}
                 onChange={(event) => {
+                  suppressedAddressQueryRef.current = null;
                   setAddressQuery(event.target.value);
                   setAddressError(null);
                 }}
