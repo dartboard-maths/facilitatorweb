@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasTutorMarketplaceAccess } from "../../../../lib/auth/facilitator-access";
 import { getMarketplaceSession } from "../../../../lib/auth/session";
 import { MARKETPLACE_VIEW_ROLE_COOKIE, parseMarketplaceViewRole } from "../../../../lib/auth/view-role";
 
@@ -31,6 +32,9 @@ export async function GET(request: NextRequest) {
 
   if (parsed === "school_admin" && !session.isSchoolAdmin) {
     return NextResponse.redirect(new URL("/role-select", request.nextUrl.origin));
+  }
+  if (parsed === "tutor" && !hasTutorMarketplaceAccess(session)) {
+    return NextResponse.redirect(new URL("/facilitator-certification", request.nextUrl.origin));
   }
 
   const destination = new URL(safeNextPath(request.nextUrl.searchParams.get("next")), request.nextUrl.origin);

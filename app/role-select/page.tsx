@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getMoodleFacilitatorCourseUrl, hasTutorMarketplaceAccess } from "../../lib/auth/facilitator-access";
 import { getMarketplaceSession } from "../../lib/auth/session";
 import { getCmsPageBySlug } from "../../lib/cms/contentful";
 import { CmsPageRenderer } from "../../components/cms/CmsPageRenderer";
@@ -21,6 +22,8 @@ export default async function RoleSelectPage() {
   };
 
   const hasSchoolAdminAccess = session.isSchoolAdmin;
+  const hasTutorAccess = hasTutorMarketplaceAccess(session);
+  const facilitatorCourseUrl = getMoodleFacilitatorCourseUrl();
 
   return (
     <>
@@ -49,9 +52,13 @@ export default async function RoleSelectPage() {
               </div>
               <h1 className="h3 mb-2">Choose your marketplace role</h1>
               <p className="text-secondary mb-4">
-                {hasSchoolAdminAccess
+                {hasSchoolAdminAccess && hasTutorAccess
                   ? "Select the role you want to use right now."
-                  : "Your account currently has Tutor access only."}
+                  : hasSchoolAdminAccess
+                    ? "Your account has School Admin access. Tutor tools unlock after Facilitator Training (DBMU01) is complete."
+                    : hasTutorAccess
+                      ? "Your account currently has Tutor access only."
+                      : "Complete Facilitator Training (DBMU01) in Moodle to unlock tutor marketplace tools."}
               </p>
 
               <div className="row g-3">
@@ -60,21 +67,43 @@ export default async function RoleSelectPage() {
                     <div className="card-body d-flex flex-column">
                       <h2 className="h5 mb-2">Tutor</h2>
                       <p className="text-secondary mb-3">
-                        Create or update your tutor profile, availability, rates, and location.
+                        {hasTutorAccess
+                          ? "Create or update your tutor profile, availability, rates, and location."
+                          : "Certified facilitators can list availability and accept booking requests."}
                       </p>
                       <div className="d-grid gap-2 mt-auto">
-                        <Link
-                          href="/api/auth/view-role?role=tutor&next=%2Ftutors%2Fnew"
-                          className="btn btn-primary"
-                        >
-                          Edit tutor profile
-                        </Link>
-                        <Link
-                          href="/api/auth/view-role?role=tutor&next=%2Fbookings"
-                          className="btn btn-outline-primary"
-                        >
-                          View booking requests
-                        </Link>
+                        {hasTutorAccess ? (
+                          <>
+                            <Link
+                              href="/api/auth/view-role?role=tutor&next=%2Ftutors%2Fnew"
+                              className="btn btn-primary"
+                            >
+                              Edit tutor profile
+                            </Link>
+                            <Link
+                              href="/api/auth/view-role?role=tutor&next=%2Fbookings"
+                              className="btn btn-outline-primary"
+                            >
+                              View booking requests
+                            </Link>
+                          </>
+                        ) : (
+                          <>
+                            <Link href="/facilitator-certification" className="btn btn-primary">
+                              View certification requirements
+                            </Link>
+                            {facilitatorCourseUrl ? (
+                              <a
+                                className="btn btn-outline-primary"
+                                href={facilitatorCourseUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Open Facilitator Training
+                              </a>
+                            ) : null}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

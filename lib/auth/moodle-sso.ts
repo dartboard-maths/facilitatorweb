@@ -45,6 +45,31 @@ export function verifyMoodleSsoSignature(input: {
   });
 }
 
+export function verifyMoodleSsoSignatureV2(input: {
+  email: string;
+  moodleUserId: string;
+  timestamp: number;
+  nextPath: string;
+  isSchoolAdmin: boolean;
+  managedSchoolIdsCsv: string;
+  isFacilitatorCertified: boolean;
+  signature: string;
+}): boolean {
+  const secret = requireServerEnv(
+    process.env.MOODLE_SSO_SHARED_SECRET,
+    "MOODLE_SSO_SHARED_SECRET",
+  ).trim();
+  const nextPath = decodeURIComponent(input.nextPath);
+  const normalizedEmail = input.email.toLowerCase().trim();
+  const normalizedUserId = input.moodleUserId.trim();
+  const payload = `${normalizedEmail}|${normalizedUserId}|${input.timestamp}|${nextPath}|${input.isSchoolAdmin ? 1 : 0}|${input.managedSchoolIdsCsv}|${input.isFacilitatorCertified ? 1 : 0}`;
+  const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  const sigA = Buffer.from(input.signature, "hex");
+  const sigB = Buffer.from(expected, "hex");
+  if (sigA.length !== sigB.length) return false;
+  return crypto.timingSafeEqual(sigA, sigB);
+}
+
 export function sanitizeNextPath(value: string | null): string {
   if (!value) return "/tutors/new";
   if (!value.startsWith("/") || value.startsWith("//")) return "/tutors/new";

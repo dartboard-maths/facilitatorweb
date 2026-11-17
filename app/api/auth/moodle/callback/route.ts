@@ -3,6 +3,7 @@ import {
   isTimestampValid,
   sanitizeNextPath,
   verifyMoodleSsoSignature,
+  verifyMoodleSsoSignatureV2,
 } from "../../../../../lib/auth/moodle-sso";
 import { setMarketplaceSession, deterministicUuidFromMoodleId } from "../../../../../lib/auth/session";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
@@ -74,6 +75,9 @@ export async function GET(request: NextRequest) {
   );
   const managedSchoolIdsCsv = managedSchoolIds.join(",");
   const signature = (request.nextUrl.searchParams.get("sig") ?? "").trim();
+  const signatureV2 = (request.nextUrl.searchParams.get("sig_v2") ?? "").trim();
+  const facilitatorCertifiedParam =
+    (request.nextUrl.searchParams.get("dbm_facilitator_certified") ?? "0").trim() === "1";
   const timestamp = Number(request.nextUrl.searchParams.get("ts") ?? "0");
   const name = (request.nextUrl.searchParams.get("name") ?? "").trim() || null;
   const nextPath = sanitizeNextPath(request.nextUrl.searchParams.get("next"));
@@ -105,6 +109,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in?error=invalid_sso_signature", request.nextUrl.origin));
   }
 
+  let isFacilitatorCertified = false;
+  if (signatureV2) {
+    const isValidSignatureV2 = verifyMoodleSsoSignatureV2({
+      email,
+      moodleUserId,
+      timestamp,
+      nextPath,
+      isSchoolAdmin,
+      managedSchoolIdsCsv,
+      isFacilitatorCertified: facilitatorCertifiedParam,
+      signature: signatureV2,
+    });
+    if (!isValidSignatureV2) {
+      return NextResponse.redirect(new URL("/sign-in?error=invalid_sso_signature", request.nextUrl.origin));
+    }
+    isFacilitatorCertified = facilitatorCertifiedParam;
+  }
+
   const userId = deterministicUuidFromMoodleId(moodleUserId);
   let admin;
   try {
@@ -120,6 +142,7 @@ export async function GET(request: NextRequest) {
     first_name: firstName || null,
     last_name: lastName || null,
     is_school_admin: isSchoolAdmin,
+    is_facilitator_certified: isFacilitatorCertified,
     managed_school_ids: managedSchoolIds,
     moodle_user_id: moodleUserId,
   };
@@ -132,7 +155,8 @@ export async function GET(request: NextRequest) {
     userUpsertError &&
     (
       /is_school_admin/i.test(userUpsertError.message) ||
-      /managed_school_ids/i.test(userUpsertError.message)
+      /managed_school_ids/i.test(userUpsertError.message) ||
+      /is_facilitator_certified/i.test(userUpsertError.message)
     )
   ) {
     const { error: fallbackUpsertError } = await admin.from("users").upsert({
@@ -190,6 +214,7 @@ export async function GET(request: NextRequest) {
     lastName: lastName || null,
     moodlePhotoUrl,
     isSchoolAdmin,
+    isFacilitatorCertified,
     managedSchoolIds,
   });
 

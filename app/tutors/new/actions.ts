@@ -2,6 +2,7 @@
 
 import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { hasTutorMarketplaceAccess } from "../../../lib/auth/facilitator-access";
 import { getMarketplaceSession } from "../../../lib/auth/session";
 import { LEVEL_OPTIONS, SUBJECT_OPTIONS } from "../../../lib/tutor/subject-level-options";
 import { createAdminClient } from "../../../lib/supabase/admin";
@@ -238,6 +239,11 @@ export async function createTutorProfile(
 
   if (!session) {
     return { error: "You must be signed in with Moodle to create a tutor profile." };
+  }
+  if (!hasTutorMarketplaceAccess(session)) {
+    return {
+      error: "Complete Facilitator Training (DBMU01) in Moodle before creating a tutor profile.",
+    };
   }
 
   const supabase = createAdminClient();
