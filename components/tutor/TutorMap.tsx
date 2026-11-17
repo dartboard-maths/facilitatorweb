@@ -47,6 +47,45 @@ const FALLBACK_COORDINATES: Coordinates = {
   longitude: 18.4241,
 };
 
+const SCHOOL_FOCUS_ZOOM = 15;
+
+function schoolFocusFromLocation(): (Coordinates & { name: string }) | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const latitude = Number(params.get("lat"));
+  const longitude = Number(params.get("lng"));
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return null;
+  }
+  return {
+    latitude,
+    longitude,
+    name: (params.get("name") ?? "").replace(/\s+/g, " ").trim(),
+  };
+}
+
+function moveMapTo(map: mapboxgl.Map, location: Coordinates, zoom: number) {
+  const run = () => {
+    map.flyTo({
+      center: [location.longitude, location.latitude],
+      zoom,
+      essential: true,
+    });
+  };
+  if (map.loaded()) {
+    run();
+  } else {
+    map.once("load", run);
+  }
+}
+
 function zoomForDistanceKm(distanceKm: number): number {
   if (distanceKm <= 5) return 13;
   if (distanceKm <= 10) return 12;
@@ -196,11 +235,13 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
     if (!mapContainerRef.current || mapRef.current || !mapboxToken) return;
 
     mapboxgl.accessToken = mapboxToken;
+    const focus = schoolFocusFromLocation();
+    const start = focus ?? FALLBACK_COORDINATES;
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [FALLBACK_COORDINATES.longitude, FALLBACK_COORDINATES.latitude],
-      zoom: 10,
+      center: [start.longitude, start.latitude],
+      zoom: focus ? SCHOOL_FOCUS_ZOOM : 10,
     });
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
     mapRef.current = map;
@@ -214,6 +255,15 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
   }, [mapboxToken]);
 
   useEffect(() => {
+    const focus = schoolFocusFromLocation();
+    if (focus) {
+      setUserLocation({ latitude: focus.latitude, longitude: focus.longitude });
+      if (focus.name) {
+        setAddressQuery(focus.name);
+      }
+      return;
+    }
+
     if (!navigator.geolocation) {
       setUserLocation(FALLBACK_COORDINATES);
       return;
@@ -237,11 +287,12 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
     if (!userLocation) return;
     const map = mapRef.current;
     if (map) {
-      map.flyTo({
-        center: [userLocation.longitude, userLocation.latitude],
-        zoom: zoomForDistanceKm(distanceKm),
-        essential: true,
-      });
+      const focus = schoolFocusFromLocation();
+      moveMapTo(
+        map,
+        userLocation,
+        focus ? SCHOOL_FOCUS_ZOOM : zoomForDistanceKm(distanceKm),
+      );
     }
     void loadTutors(userLocation, distanceKm);
   }, [distanceKm, loadTutors, userLocation]);
@@ -250,12 +301,6 @@ export function TutorMap({ initialRadiusKm = 20, canBook = false }: TutorMapProp
     if (!userLocation) return;
     const map = mapRef.current;
     if (!map) return;
-
-    map.flyTo({
-      center: [userLocation.longitude, userLocation.latitude],
-      zoom: 12,
-      essential: true,
-    });
 
     if (!userMarkerRef.current) {
       const userEl = document.createElement("div");
