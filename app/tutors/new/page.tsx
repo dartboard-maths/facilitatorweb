@@ -1,5 +1,6 @@
 import { createTutorProfile } from "./actions";
 import { TutorProfileForm } from "../../../components/tutor/TutorProfileForm";
+import { hasTutorMarketplaceAccess } from "../../../lib/auth/facilitator-access";
 import { getMarketplaceSession } from "../../../lib/auth/session";
 import { createAdminClient } from "../../../lib/supabase/admin";
 import Link from "next/link";
@@ -36,6 +37,9 @@ export default async function NewTutorProfilePage() {
   const session = await getMarketplaceSession();
   if (!session) {
     redirect("/sign-in?next=/tutors/new");
+  }
+  if (!hasTutorMarketplaceAccess(session)) {
+    redirect("/facilitator-certification");
   }
 
   const supabase = createAdminClient();

@@ -8,7 +8,7 @@ function shouldUseSecureCookies(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
-type MarketplaceSessionPayload = {
+export type MarketplaceSessionPayload = {
   sub: string;
   email: string;
   name: string | null;
@@ -16,6 +16,7 @@ type MarketplaceSessionPayload = {
   lastName: string | null;
   moodlePhotoUrl: string | null;
   isSchoolAdmin: boolean;
+  isFacilitatorCertified: boolean;
   managedSchoolIds: string[];
   moodleUserId: string;
   exp: number;
@@ -67,6 +68,7 @@ export async function setMarketplaceSession(input: {
   lastName?: string | null;
   moodlePhotoUrl?: string | null;
   isSchoolAdmin?: boolean;
+  isFacilitatorCertified?: boolean;
   managedSchoolIds?: string[];
   maxAgeSeconds?: number;
 }) {
@@ -79,6 +81,7 @@ export async function setMarketplaceSession(input: {
     lastName: input.lastName?.trim() || null,
     moodlePhotoUrl: input.moodlePhotoUrl?.trim() || null,
     isSchoolAdmin: Boolean(input.isSchoolAdmin),
+    isFacilitatorCertified: Boolean(input.isFacilitatorCertified),
     managedSchoolIds: (input.managedSchoolIds ?? []).map((id) => id.trim()).filter(Boolean),
     moodleUserId: input.moodleUserId.trim(),
     exp: Math.floor(Date.now() / 1000) + maxAgeSeconds,
@@ -128,6 +131,7 @@ export async function getMarketplaceSession(): Promise<MarketplaceSessionPayload
     return {
       ...payload,
       isSchoolAdmin: Boolean(payload.isSchoolAdmin),
+      isFacilitatorCertified: Boolean(payload.isFacilitatorCertified),
       managedSchoolIds: Array.isArray(payload.managedSchoolIds)
         ? payload.managedSchoolIds.map((value) => String(value))
         : [],

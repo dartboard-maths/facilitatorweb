@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookingInbox, type BookingInboxItem } from "../../components/booking/BookingInbox";
 import { CmsPageRenderer } from "../../components/cms/CmsPageRenderer";
+import { hasTutorMarketplaceAccess } from "../../lib/auth/facilitator-access";
 import { getMarketplaceSession } from "../../lib/auth/session";
 import { getCmsPageBySlug } from "../../lib/cms/contentful";
 import { getMarketplaceViewRoleFromCookies, resolveInboxViewRole } from "../../lib/auth/view-role";
@@ -108,6 +109,9 @@ export default async function BookingsInboxPage({ searchParams }: BookingsPagePr
   const cookieRole = await getMarketplaceViewRoleFromCookies();
   const inboxViewRole = resolveInboxViewRole(session, { hasTutorProfile, cookieRole });
   const isTutorView = inboxViewRole === "tutor";
+  if (isTutorView && !hasTutorMarketplaceAccess(session)) {
+    redirect("/facilitator-certification");
+  }
 
   const baseBookingsQuery = () => {
     let q = supabase
