@@ -24,7 +24,9 @@ export function verifyMoodleSsoSignature(input: {
     process.env.MOODLE_SSO_SHARED_SECRET,
     "MOODLE_SSO_SHARED_SECRET",
   ).trim();
-  const nextPath = decodeURIComponent(input.nextPath);
+  // Moodle signs the next path after one URL decode. Decoding again turns
+  // encoded figures such as "%25" and "%E2%80%94" into a different string.
+  const nextPath = input.nextPath;
   const normalizedEmail = input.email.toLowerCase().trim();
   const normalizedUserId = input.moodleUserId.trim();
 
@@ -59,7 +61,7 @@ export function verifyMoodleSsoSignatureV2(input: {
     process.env.MOODLE_SSO_SHARED_SECRET,
     "MOODLE_SSO_SHARED_SECRET",
   ).trim();
-  const nextPath = decodeURIComponent(input.nextPath);
+  const nextPath = input.nextPath;
   const normalizedEmail = input.email.toLowerCase().trim();
   const normalizedUserId = input.moodleUserId.trim();
   const payload = `${normalizedEmail}|${normalizedUserId}|${input.timestamp}|${nextPath}|${input.isSchoolAdmin ? 1 : 0}|${input.managedSchoolIdsCsv}|${input.isFacilitatorCertified ? 1 : 0}`;
