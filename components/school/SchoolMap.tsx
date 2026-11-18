@@ -218,7 +218,7 @@ export function SchoolMap({
   const prompt = promptFor(access, pins.length > 0, Boolean(selected));
 
   return (
-    <section className={styles["school-map"]} aria-label="Find a school">
+    <section className={styles["school-map"]} aria-label="Region Inspector">
       <div ref={mapContainerRef} className={styles["school-map__canvas"]} />
       <button
         type="button"
@@ -235,12 +235,15 @@ export function SchoolMap({
         Recenter
       </button>
       <aside className={styles["school-map__panel"]}>
-        <p className={styles["school-map__home"]}>
-          <Link href="/">Edu Placement home</Link>
-        </p>
+        <div className={`${styles["school-map__header"]} d-flex align-items-center gap-2`}>
+          <Link href="/" className="btn btn-link p-0 text-decoration-none" aria-label="Back to homepage">
+            ←
+          </Link>
+          <h2 className={styles["school-map__heading"]}>Region Inspector</h2>
+        </div>
         {selected ? (
           <>
-            <h1 className={styles["school-map__title"]}>{selected.name}</h1>
+            <p className={styles["school-map__title"]}>{selected.name}</p>
             <p className={styles["school-map__id"]}>{selected.id}</p>
             <dl className={styles["school-map__stats"]}>
               {STATS.map((stat) => (
@@ -253,7 +256,6 @@ export function SchoolMap({
           </>
         ) : (
           <>
-            <h1 className={styles["school-map__title"]}>Find a school</h1>
             <p className={styles["school-map__prompt"]}>{prompt}</p>
           </>
         )}

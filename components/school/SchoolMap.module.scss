@@ -19,9 +19,14 @@
     transform: translateX(-50%);
   }
 
-  &__home {
-    margin: 0 0 0.65rem;
-    font-size: 0.9rem;
+  &__header {
+    margin-bottom: 0.75rem;
+  }
+
+  &__heading {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
   }
 
   &__panel {
