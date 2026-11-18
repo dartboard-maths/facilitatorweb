@@ -11,7 +11,7 @@ type CmsFooterGateProps = {
 export default function CmsFooterGate({ footer }: CmsFooterGateProps) {
   const pathname = usePathname();
 
-  if (pathname === "/tutors") {
+  if (pathname === "/tutors" || pathname === "/schools") {
     return null;
   }
 

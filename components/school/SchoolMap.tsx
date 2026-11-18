@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { InspectorDirectoryAccess, InspectorSchoolFigures, InspectorSchoolPin } from "../../lib/schools/inspector-directory";
@@ -49,6 +50,22 @@ function figuresFromQuery(query: SchoolQuery): InspectorSchoolFigures {
     competencies: figure(query.competencies),
     badges: figure(query.badges),
   };
+}
+
+function frameSchools(map: mapboxgl.Map, schoolPins: InspectorSchoolPin[], duration?: number) {
+  if (schoolPins.length > 1) {
+    const bounds = new mapboxgl.LngLatBounds();
+    schoolPins.forEach((pin) => bounds.extend([pin.longitude, pin.latitude]));
+    map.fitBounds(bounds, { padding: 80, maxZoom: 14, duration });
+    return;
+  }
+  const focus = schoolPins[0] ?? FALLBACK_CENTER;
+  map.flyTo({
+    center: [focus.longitude, focus.latitude],
+    zoom: schoolPins.length === 1 ? 14 : 4,
+    essential: true,
+    duration,
+  });
 }
 
 function promptFor(access: InspectorDirectoryAccess, hasSchools: boolean, hasSelection: boolean): string {
@@ -122,12 +139,9 @@ export function SchoolMap({
     });
     markersRef.current = markers;
     map.on("load", () => {
-      if (pins.length < 2) {
-        return;
+      if (pins.length > 1) {
+        frameSchools(map, pins, 0);
       }
-      const bounds = new mapboxgl.LngLatBounds();
-      pins.forEach((pin) => bounds.extend([pin.longitude, pin.latitude]));
-      map.fitBounds(bounds, { padding: 80, maxZoom: 14, duration: 0 });
     });
     mapRef.current = map;
 
@@ -185,7 +199,24 @@ export function SchoolMap({
   return (
     <section className={styles["school-map"]} aria-label="Find a school">
       <div ref={mapContainerRef} className={styles["school-map__canvas"]} />
+      <button
+        type="button"
+        className={`${styles["school-map__recenter"]} btn btn-sm btn-light`}
+        onClick={() => {
+          const map = mapRef.current;
+          if (!map) {
+            return;
+          }
+          frameSchools(map, pins);
+        }}
+        disabled={!mapboxToken}
+      >
+        Recenter
+      </button>
       <aside className={styles["school-map__panel"]}>
+        <p className={styles["school-map__home"]}>
+          <Link href="/">Edu Placement home</Link>
+        </p>
         {selected ? (
           <>
             <h1 className={styles["school-map__title"]}>{selected.name}</h1>
