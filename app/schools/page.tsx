@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 type SchoolsPageProps = {
-  searchParams?: SchoolQuery;
+  searchParams?: SchoolQuery & { sso?: string };
 };
 
 function schoolsNextPath(query: SchoolQuery): string {
@@ -25,8 +25,8 @@ function schoolsNextPath(query: SchoolQuery): string {
 }
 
 export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
-  const query = searchParams ?? {};
-  const session = await getMarketplaceSession();
+  const { sso, ...query } = searchParams ?? {};
+  const session = sso === "1" ? null : await getMarketplaceSession();
   if (!session) {
     redirect(`/api/auth/moodle/start?next=${encodeURIComponent(schoolsNextPath(query))}`);
   }
