@@ -52,19 +52,41 @@ function figuresFromQuery(query: SchoolQuery): InspectorSchoolFigures {
   };
 }
 
-function frameSchools(map: mapboxgl.Map, schoolPins: InspectorSchoolPin[], duration?: number) {
-  if (schoolPins.length > 1) {
-    const bounds = new mapboxgl.LngLatBounds();
-    schoolPins.forEach((pin) => bounds.extend([pin.longitude, pin.latitude]));
-    map.fitBounds(bounds, { padding: 80, maxZoom: 14, duration });
+function frameSchools(map: mapboxgl.Map, schoolPins: InspectorSchoolPin[], duration: number) {
+  map.stop();
+  map.getContainer().querySelectorAll(".mapboxgl-popup").forEach((popup) => popup.remove());
+
+  const bounds = new mapboxgl.LngLatBounds();
+  schoolPins.forEach((pin) => {
+    if (Number.isFinite(pin.longitude) && Number.isFinite(pin.latitude)) {
+      bounds.extend([pin.longitude, pin.latitude]);
+    }
+  });
+  if (bounds.isEmpty()) {
+    map.easeTo({
+      center: [FALLBACK_CENTER.longitude, FALLBACK_CENTER.latitude],
+      zoom: 4,
+      bearing: 0,
+      pitch: 0,
+      duration,
+      essential: true,
+    });
     return;
   }
-  const focus = schoolPins[0] ?? FALLBACK_CENTER;
-  map.flyTo({
-    center: [focus.longitude, focus.latitude],
-    zoom: schoolPins.length === 1 ? 14 : 4,
-    essential: true,
+
+  const size = Math.min(map.getContainer().clientWidth, map.getContainer().clientHeight);
+  const padding = Math.max(24, Math.min(80, Math.floor(size / 6)));
+  const camera = map.cameraForBounds(bounds, { padding, maxZoom: schoolPins.length === 1 ? 14 : 12 });
+  if (!camera?.center || camera.zoom == null || !Number.isFinite(camera.zoom)) {
+    return;
+  }
+  map.easeTo({
+    center: camera.center,
+    zoom: camera.zoom,
+    bearing: 0,
+    pitch: 0,
     duration,
+    essential: true,
   });
 }
 
@@ -128,7 +150,6 @@ export function SchoolMap({
     pins.forEach((pin) => {
       const marker = new mapboxgl.Marker({ color: "#1a2c4e" })
         .setLngLat([pin.longitude, pin.latitude])
-        .setPopup(new mapboxgl.Popup({ offset: 24 }).setText(`${pin.name} (${pin.id})`))
         .addTo(map);
       marker.getElement().style.cursor = "pointer";
       marker.getElement().addEventListener("click", () => {
@@ -204,10 +225,10 @@ export function SchoolMap({
         className={`${styles["school-map__recenter"]} btn btn-sm btn-light`}
         onClick={() => {
           const map = mapRef.current;
-          if (!map) {
+          if (!map?.isStyleLoaded()) {
             return;
           }
-          frameSchools(map, pins);
+          frameSchools(map, pins, 700);
         }}
         disabled={!mapboxToken}
       >
