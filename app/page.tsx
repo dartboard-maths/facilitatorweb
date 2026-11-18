@@ -49,6 +49,9 @@ function FallbackHome({ roleHomeHref, roleHomeLabel }: HomeRoleNavProps) {
             <Link href="/tutors" className="btn btn-link">
               Tutors
             </Link>
+            <Link href="/schools" className="btn btn-link">
+              Find a school
+            </Link>
             <Link href={roleHomeHref} className="btn btn-outline-primary">
               {roleHomeLabel}
             </Link>

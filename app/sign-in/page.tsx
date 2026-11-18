@@ -64,6 +64,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
                 <div className="mt-3 small text-secondary">
                   Looking for tutors first? <Link href="/tutors">Browse tutors</Link>
+                  {" · "}
+                  <Link href="/schools">Find a school</Link>
                 </div>
               </div>
             </div>
