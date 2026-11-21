@@ -29,6 +29,7 @@
     gap: 0.75rem;
     width: min(380px, calc(100% - 2rem));
     max-height: calc(100vh - 2rem);
+    overflow: auto;
     pointer-events: none;
   }
 
@@ -43,7 +44,8 @@
   }
 
   &__panel,
-  &__school {
+  &__school,
+  &__grades-island {
     pointer-events: auto;
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 1.25rem;
@@ -57,10 +59,15 @@
     padding: 0.9rem 1rem;
   }
 
-  &__school {
-    min-height: 0;
-    overflow: auto;
+  &__school,
+  &__grades-island {
+    flex: 0 0 auto;
     padding: 0.9rem 1rem 1rem;
+  }
+
+  &__grades-island {
+    overflow: visible;
+    animation: school-map-drop 320ms ease;
   }
 
   &__title {
@@ -179,7 +186,6 @@
   }
 
   &__grades {
-    margin-top: 0.9rem;
     display: grid;
     gap: 0.75rem;
   }
@@ -200,26 +206,6 @@
     color: #fff;
     font-weight: 700;
     padding: 0.55rem 0.9rem;
-  }
-
-  &__grades-clip {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 320ms ease;
-
-    &--open {
-      grid-template-rows: 1fr;
-    }
-  }
-
-  &__grades-clip-inner {
-    overflow: hidden;
-  }
-
-  &__grades {
-    margin-top: 0.75rem;
-    display: grid;
-    gap: 0.65rem;
   }
 
   &__grades:has([aria-pressed="true"]) &__grade[aria-pressed="false"] {
@@ -638,6 +624,17 @@
     &__challenge {
       grid-template-columns: 1fr;
     }
+  }
+}
+
+@keyframes school-map-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

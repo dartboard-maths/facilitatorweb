@@ -402,54 +402,52 @@ export function SchoolMap({
             <p className={styles["school-map__id"]}>{selected.id}</p>
             <StatDials values={figures} loading={loading && !figures} />
             {figures && figures.grades.length > 0 ? (
-              <>
-                <button
-                  type="button"
-                  className={styles["school-map__grades-cta"]}
-                  aria-expanded={gradesOpen}
-                  onClick={() => {
-                    setGradesOpen((open) => {
-                      if (open) {
-                        setSelectedGrade(null);
-                        setGradeProfile(null);
-                        setSelectedLearnerKey(null);
-                      }
-                      return !open;
-                    });
-                  }}
-                >
-                  Grades
-                </button>
-                <div className={`${styles["school-map__grades-clip"]} ${gradesOpen ? styles["school-map__grades-clip--open"] : ""}`}>
-                  <div className={styles["school-map__grades-clip-inner"]}>
-                    <section className={styles["school-map__grades"]} aria-label="Grades">
-                      {figures.grades.map((grade) => {
-                        const number = gradeNumber(grade.label);
-                        const active = number !== null && number === selectedGrade;
-                        return (
-                          <button
-                            type="button"
-                            className={styles["school-map__grade"]}
-                            key={grade.label}
-                            disabled={number === null}
-                            aria-pressed={active}
-                            onClick={() => {
-                              if (number === null) {
-                                return;
-                              }
-                              setSelectedGrade((current) => (current === number ? null : number));
-                            }}
-                          >
-                            <span className={styles["school-map__grade-title"]}>{grade.label}</span>
-                            <StatDials values={grade} />
-                          </button>
-                        );
-                      })}
-                    </section>
-                  </div>
-                </div>
-              </>
+              <button
+                type="button"
+                className={styles["school-map__grades-cta"]}
+                aria-expanded={gradesOpen}
+                onClick={() => {
+                  setGradesOpen((open) => {
+                    if (open) {
+                      setSelectedGrade(null);
+                      setGradeProfile(null);
+                      setSelectedLearnerKey(null);
+                    }
+                    return !open;
+                  });
+                }}
+              >
+                Grades
+              </button>
             ) : null}
+          </aside>
+        ) : null}
+        {selected && gradesOpen && figures && figures.grades.length > 0 ? (
+          <aside className={styles["school-map__grades-island"]} aria-label="Grades">
+            <section className={styles["school-map__grades"]}>
+              {figures.grades.map((grade) => {
+                const number = gradeNumber(grade.label);
+                const active = number !== null && number === selectedGrade;
+                return (
+                  <button
+                    type="button"
+                    className={styles["school-map__grade"]}
+                    key={grade.label}
+                    disabled={number === null}
+                    aria-pressed={active}
+                    onClick={() => {
+                      if (number === null) {
+                        return;
+                      }
+                      setSelectedGrade((current) => (current === number ? null : number));
+                    }}
+                  >
+                    <span className={styles["school-map__grade-title"]}>{grade.label}</span>
+                    <StatDials values={grade} />
+                  </button>
+                );
+              })}
+            </section>
           </aside>
         ) : null}
       </div>
