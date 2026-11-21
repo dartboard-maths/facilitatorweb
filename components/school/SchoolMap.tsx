@@ -23,7 +23,9 @@ export type SchoolQuery = {
 const FALLBACK_CENTER = { latitude: -33.9249, longitude: 18.4241 };
 const UNKNOWN = "—";
 
-const STATS: Array<{ key: keyof InspectorSchoolFigures; label: string }> = [
+type FigureKey = "learners" | "courses" | "completion" | "grade" | "competencies" | "badges";
+
+const STATS: Array<{ key: FigureKey; label: string }> = [
   { key: "learners", label: "Learners" },
   { key: "courses", label: "Courses" },
   { key: "completion", label: "Completion" },
@@ -49,6 +51,7 @@ function figuresFromQuery(query: SchoolQuery): InspectorSchoolFigures {
     grade: figure(query.grade),
     competencies: figure(query.competencies),
     badges: figure(query.badges),
+    grades: [],
   };
 }
 
@@ -253,6 +256,24 @@ export function SchoolMap({
                 </div>
               ))}
             </dl>
+            {figures && figures.grades.length > 0 ? (
+              <section className={styles["school-map__grades"]} aria-label="Grades">
+                <h3 className={styles["school-map__grades-title"]}>Grades</h3>
+                {figures.grades.map((grade) => (
+                  <article className={styles["school-map__grade"]} key={grade.label}>
+                    <h4 className={styles["school-map__grade-title"]}>{grade.label}</h4>
+                    <dl className={styles["school-map__stats"]}>
+                      {STATS.map((stat) => (
+                        <div className={styles["school-map__stat"]} key={stat.key}>
+                          <dt>{stat.label}</dt>
+                          <dd>{figure(grade[stat.key])}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </article>
+                ))}
+              </section>
+            ) : null}
           </>
         ) : (
           <>

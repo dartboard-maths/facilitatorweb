@@ -7,6 +7,16 @@ export type InspectorSchoolPin = {
   longitude: number;
 };
 
+export type InspectorGradeFigures = {
+  label: string;
+  learners: string;
+  courses: string;
+  completion: string;
+  grade: string;
+  competencies: string;
+  badges: string;
+};
+
 export type InspectorSchoolFigures = {
   learners: string;
   courses: string;
@@ -14,6 +24,7 @@ export type InspectorSchoolFigures = {
   grade: string;
   competencies: string;
   badges: string;
+  grades: InspectorGradeFigures[];
 };
 
 export type InspectorDirectoryAccess = "ready" | "not_inspector" | "unavailable";
@@ -111,11 +122,37 @@ function figureText(value: unknown): string {
   return text || "—";
 }
 
+function gradeFromRecord(value: unknown): InspectorGradeFigures | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const label = typeof record.label === "string" ? record.label.replace(/\s+/g, " ").trim() : "";
+  if (!label) {
+    return null;
+  }
+  return {
+    label,
+    learners: figureText(record.learners),
+    courses: figureText(record.courses),
+    completion: figureText(record.completion),
+    grade: figureText(record.grade),
+    competencies: figureText(record.competencies),
+    badges: figureText(record.badges),
+  };
+}
+
 export function figuresFromRecord(value: unknown): InspectorSchoolFigures | null {
   if (!value || typeof value !== "object") {
     return null;
   }
   const record = value as Record<string, unknown>;
+  const grades = Array.isArray(record.grades)
+    ? record.grades.flatMap((item) => {
+        const grade = gradeFromRecord(item);
+        return grade ? [grade] : [];
+      })
+    : [];
   return {
     learners: figureText(record.learners),
     courses: figureText(record.courses),
@@ -123,6 +160,7 @@ export function figuresFromRecord(value: unknown): InspectorSchoolFigures | null
     grade: figureText(record.grade),
     competencies: figureText(record.competencies),
     badges: figureText(record.badges),
+    grades,
   };
 }
 

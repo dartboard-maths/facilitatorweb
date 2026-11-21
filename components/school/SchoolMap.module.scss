@@ -34,6 +34,8 @@
     top: 1rem;
     left: 1rem;
     width: min(380px, calc(100% - 2rem));
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 0.75rem;
     background: rgba(255, 255, 255, 0.96);
@@ -80,5 +82,25 @@
     margin: 0;
     text-align: right;
     font-weight: 600;
+  }
+
+  &__grades {
+    margin-top: 0.9rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  &__grades-title,
+  &__grade-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  &__grade {
+    display: grid;
+    gap: 0.35rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.12);
   }
 }
