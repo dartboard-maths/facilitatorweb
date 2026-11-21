@@ -4,7 +4,14 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import type { InspectorDirectoryAccess, InspectorSchoolFigures, InspectorSchoolPin } from "../../lib/schools/inspector-directory";
+import type {
+  InspectorDirectoryAccess,
+  InspectorGradeProfile,
+  InspectorSchoolFigures,
+  InspectorSchoolPin,
+} from "../../lib/schools/inspector-directory";
+import { ClassProfileIsland } from "./ClassProfileIsland";
+import { LearnerBattleDeck } from "./LearnerBattleDeck";
 import styles from "./SchoolMap.module.scss";
 
 export type SchoolQuery = {
@@ -102,6 +109,15 @@ function StatDials({
   );
 }
 
+function gradeNumber(label: string): number | null {
+  const match = label.match(/^Grade\s+(\d{1,2})$/);
+  if (!match) {
+    return null;
+  }
+  const grade = Number(match[1]);
+  return grade >= 0 && grade <= 19 ? grade : null;
+}
+
 function figuresFromQuery(query: SchoolQuery): InspectorSchoolFigures {
   return {
     learners: figure(query.learners),
@@ -189,6 +205,12 @@ export function SchoolMap({
     linkedPin ? figuresFromQuery(query) : null,
   );
   const [loading, setLoading] = useState(false);
+  const [gradesOpen, setGradesOpen] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [gradeProfile, setGradeProfile] = useState<InspectorGradeProfile | null>(null);
+  const [gradeLoading, setGradeLoading] = useState(false);
+  const [gradeFailed, setGradeFailed] = useState(false);
+  const [selectedLearnerKey, setSelectedLearnerKey] = useState<string | null>(null);
   const selected = pins.find((pin) => pin.id === selectedId) ?? null;
 
   selectRef.current = (id: string) => {
@@ -277,7 +299,70 @@ export function SchoolMap({
     return () => controller.abort();
   }, [linkedPin?.id, selectedId]);
 
+  useEffect(() => {
+    setGradesOpen(false);
+    setSelectedGrade(null);
+    setGradeProfile(null);
+    setGradeFailed(false);
+    setSelectedLearnerKey(null);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId || selectedGrade === null) {
+      setGradeProfile(null);
+      setGradeLoading(false);
+      setGradeFailed(false);
+      return;
+    }
+    const controller = new AbortController();
+    setGradeLoading(true);
+    setGradeFailed(false);
+    setSelectedLearnerKey(null);
+    fetch(`/api/schools/grade?school=${encodeURIComponent(selectedId)}&grade=${selectedGrade}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          setGradeProfile(null);
+          setGradeFailed(true);
+          return;
+        }
+        setGradeProfile((await response.json()) as InspectorGradeProfile);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setGradeProfile(null);
+        setGradeFailed(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setGradeLoading(false);
+        }
+      });
+    return () => controller.abort();
+  }, [selectedGrade, selectedId]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+      if (selectedLearnerKey) {
+        setSelectedLearnerKey(null);
+        return;
+      }
+      if (selectedGrade !== null) {
+        setSelectedGrade(null);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedGrade, selectedLearnerKey]);
+
   const prompt = promptFor(access, pins.length > 0, Boolean(selected));
+  const openLearner = gradeProfile?.progress.find((row) => row.learnerKey === selectedLearnerKey) ?? null;
 
   return (
     <section className={styles["school-map"]} aria-label="Region Inspector">
@@ -309,15 +394,52 @@ export function SchoolMap({
             <p className={styles["school-map__id"]}>{selected.id}</p>
             <StatDials values={figures} loading={loading && !figures} />
             {figures && figures.grades.length > 0 ? (
-              <section className={styles["school-map__grades"]} aria-label="Grades">
-                <h3 className={styles["school-map__grades-title"]}>Grades</h3>
-                {figures.grades.map((grade) => (
-                  <article className={styles["school-map__grade"]} key={grade.label}>
-                    <h4 className={styles["school-map__grade-title"]}>{grade.label}</h4>
-                    <StatDials values={grade} />
-                  </article>
-                ))}
-              </section>
+              <>
+                <button
+                  type="button"
+                  className={styles["school-map__grades-cta"]}
+                  aria-expanded={gradesOpen}
+                  onClick={() => {
+                    setGradesOpen((open) => {
+                      if (open) {
+                        setSelectedGrade(null);
+                        setGradeProfile(null);
+                        setSelectedLearnerKey(null);
+                      }
+                      return !open;
+                    });
+                  }}
+                >
+                  Grades
+                </button>
+                <div className={`${styles["school-map__grades-clip"]} ${gradesOpen ? styles["school-map__grades-clip--open"] : ""}`}>
+                  <div className={styles["school-map__grades-clip-inner"]}>
+                    <section className={styles["school-map__grades"]} aria-label="Grades">
+                      {figures.grades.map((grade) => {
+                        const number = gradeNumber(grade.label);
+                        const active = number !== null && number === selectedGrade;
+                        return (
+                          <button
+                            type="button"
+                            className={`${styles["school-map__grade"]} ${active ? styles["school-map__grade--selected"] : ""}`}
+                            key={grade.label}
+                            disabled={number === null}
+                            onClick={() => {
+                              if (number === null) {
+                                return;
+                              }
+                              setSelectedGrade((current) => (current === number ? null : number));
+                            }}
+                          >
+                            <span className={styles["school-map__grade-title"]}>{grade.label}</span>
+                            <StatDials values={grade} />
+                          </button>
+                        );
+                      })}
+                    </section>
+                  </div>
+                </div>
+              </>
             ) : null}
           </>
         ) : (
@@ -331,6 +453,25 @@ export function SchoolMap({
           </p>
         ) : null}
       </aside>
+      {selected && selectedGrade !== null ? (
+        <ClassProfileIsland
+          profile={gradeProfile}
+          loading={gradeLoading}
+          failed={gradeFailed}
+          onClose={() => {
+            setSelectedGrade(null);
+            setSelectedLearnerKey(null);
+          }}
+          onSelectLearner={setSelectedLearnerKey}
+        />
+      ) : null}
+      {openLearner ? (
+        <LearnerBattleDeck
+          initials={openLearner.initials}
+          detail={openLearner.detail}
+          onClose={() => setSelectedLearnerKey(null)}
+        />
+      ) : null}
     </section>
   );
 }
