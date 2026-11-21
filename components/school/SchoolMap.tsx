@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -25,13 +25,17 @@ const UNKNOWN = "—";
 
 type FigureKey = "learners" | "courses" | "completion" | "grade" | "competencies" | "badges";
 
-const STATS: Array<{ key: FigureKey; label: string }> = [
-  { key: "learners", label: "Learners" },
-  { key: "courses", label: "Courses" },
-  { key: "completion", label: "Completion" },
-  { key: "grade", label: "Average grade" },
-  { key: "competencies", label: "Competencies" },
-  { key: "badges", label: "Badges" },
+const STAT_ROWS: Array<Array<{ key: FigureKey; label: string }>> = [
+  [
+    { key: "learners", label: "Learners" },
+    { key: "courses", label: "Courses" },
+    { key: "completion", label: "Completion" },
+  ],
+  [
+    { key: "grade", label: "Average grade" },
+    { key: "competencies", label: "Competencies" },
+    { key: "badges", label: "Badges" },
+  ],
 ];
 
 function schoolId(value: string | undefined): string {
@@ -41,6 +45,51 @@ function schoolId(value: string | undefined): string {
 function figure(value: string | undefined): string {
   const text = (value ?? "").replace(/\s+/g, " ").trim();
   return text || UNKNOWN;
+}
+
+function dialProgress(key: FigureKey, value: string): number {
+  if (key === "completion" || key === "grade") {
+    const match = value.match(/^(\d+(?:\.\d+)?)%$/);
+    return match ? Math.min(100, Math.max(0, Number(match[1]))) : 0;
+  }
+  const count = Number(value.replace(/,/g, ""));
+  return Number.isFinite(count) && count > 0 ? 100 : 0;
+}
+
+function StatDials({
+  values,
+  loading = false,
+}: {
+  values: Partial<Record<FigureKey, string>> | null;
+  loading?: boolean;
+}) {
+  return (
+    <div className={styles["school-map__dials"]}>
+      {STAT_ROWS.map((row) => (
+        <div className={styles["school-map__dial-row"]} key={row[0].key}>
+          {row.map((stat) => {
+            const value = loading && !values ? "…" : figure(values?.[stat.key]);
+            return (
+              <div
+                className={`${styles["school-map__dial"]} ${styles[`school-map__dial--${stat.key}`]}`}
+                key={stat.key}
+              >
+                <p className={styles["school-map__dial-label"]}>{stat.label}</p>
+                <span
+                  className={styles["school-map__ring"]}
+                  style={{ "--dbm-progress": dialProgress(stat.key, value) } as CSSProperties}
+                  role="img"
+                  aria-label={`${stat.label}: ${value}`}
+                >
+                  <span className={styles["school-map__ring-value"]}>{value}</span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function figuresFromQuery(query: SchoolQuery): InspectorSchoolFigures {
@@ -248,28 +297,14 @@ export function SchoolMap({
           <>
             <p className={styles["school-map__title"]}>{selected.name}</p>
             <p className={styles["school-map__id"]}>{selected.id}</p>
-            <dl className={styles["school-map__stats"]}>
-              {STATS.map((stat) => (
-                <div className={styles["school-map__stat"]} key={stat.key}>
-                  <dt>{stat.label}</dt>
-                  <dd>{loading && !figures ? "…" : figure(figures?.[stat.key])}</dd>
-                </div>
-              ))}
-            </dl>
+            <StatDials values={figures} loading={loading && !figures} />
             {figures && figures.grades.length > 0 ? (
               <section className={styles["school-map__grades"]} aria-label="Grades">
                 <h3 className={styles["school-map__grades-title"]}>Grades</h3>
                 {figures.grades.map((grade) => (
                   <article className={styles["school-map__grade"]} key={grade.label}>
                     <h4 className={styles["school-map__grade-title"]}>{grade.label}</h4>
-                    <dl className={styles["school-map__stats"]}>
-                      {STATS.map((stat) => (
-                        <div className={styles["school-map__stat"]} key={stat.key}>
-                          <dt>{stat.label}</dt>
-                          <dd>{figure(grade[stat.key])}</dd>
-                        </div>
-                      ))}
-                    </dl>
+                    <StatDials values={grade} />
                   </article>
                 ))}
               </section>
