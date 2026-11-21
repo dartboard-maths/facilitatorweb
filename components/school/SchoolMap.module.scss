@@ -61,27 +61,72 @@
     color: #495057;
   }
 
-  &__stats {
+  &__dials {
     display: grid;
+    gap: 0.75rem;
+  }
+
+  &__dial-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  &__dial {
+    --dbm-ring: #7c3aed;
+    display: grid;
+    justify-items: center;
     gap: 0.35rem;
-    margin: 0;
+    text-align: center;
+
+    &--learners { --dbm-ring: #4f46e5; }
+    &--courses { --dbm-ring: #2563eb; }
+    &--completion { --dbm-ring: #7c3aed; }
+    &--grade { --dbm-ring: #0891b2; }
+    &--competencies { --dbm-ring: #0f766e; }
+    &--badges { --dbm-ring: #f97316; }
   }
 
-  &__stat {
+  &__dial-label {
+    margin: 0;
+    min-height: 2rem;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+  }
+
+  &__ring {
+    --dbm-progress: 0;
+    position: relative;
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 1rem;
+    place-items: center;
+    width: 3.35rem;
+    height: 3.35rem;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        from -90deg,
+        var(--dbm-ring) calc(var(--dbm-progress) * 1%),
+        #e7e2f2 0
+      );
+      -webkit-mask: radial-gradient(farthest-side, transparent 64%, #000 65%);
+      mask: radial-gradient(farthest-side, transparent 64%, #000 65%);
+    }
   }
 
-  &__stats dt {
-    margin: 0;
-    color: #6c757d;
-  }
-
-  &__stats dd {
-    margin: 0;
-    text-align: right;
-    font-weight: 600;
+  &__ring-value {
+    position: relative;
+    z-index: 1;
+    color: #1e1b4b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
   }
 
   &__grades {
