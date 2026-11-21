@@ -381,15 +381,23 @@ export function SchoolMap({
       >
         Recenter
       </button>
-      <aside className={styles["school-map__panel"]}>
-        <div className={`${styles["school-map__header"]} d-flex align-items-center gap-2`}>
-          <Link href="/" className="btn btn-link p-0 text-decoration-none" aria-label="Back to homepage">
-            ←
-          </Link>
-          <h2 className={styles["school-map__heading"]}>Region Inspector</h2>
-        </div>
+      <div className={styles["school-map__stack"]}>
+        <aside className={styles["school-map__panel"]}>
+          <div className={`${styles["school-map__header"]} d-flex align-items-center gap-2`}>
+            <Link href="/" className="btn btn-link p-0 text-decoration-none" aria-label="Back to homepage">
+              ←
+            </Link>
+            <h2 className={styles["school-map__heading"]}>Region Inspector</h2>
+          </div>
+          {selected ? null : <p className={styles["school-map__prompt"]}>{prompt}</p>}
+          {!mapboxToken ? (
+            <p className={styles["school-map__prompt"]}>
+              Map unavailable: set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.
+            </p>
+          ) : null}
+        </aside>
         {selected ? (
-          <>
+          <aside className={styles["school-map__school"]} aria-label={selected.name}>
             <p className={styles["school-map__title"]}>{selected.name}</p>
             <p className={styles["school-map__id"]}>{selected.id}</p>
             <StatDials values={figures} loading={loading && !figures} />
@@ -421,9 +429,10 @@ export function SchoolMap({
                         return (
                           <button
                             type="button"
-                            className={`${styles["school-map__grade"]} ${active ? styles["school-map__grade--selected"] : ""}`}
+                            className={styles["school-map__grade"]}
                             key={grade.label}
                             disabled={number === null}
+                            aria-pressed={active}
                             onClick={() => {
                               if (number === null) {
                                 return;
@@ -441,18 +450,9 @@ export function SchoolMap({
                 </div>
               </>
             ) : null}
-          </>
-        ) : (
-          <>
-            <p className={styles["school-map__prompt"]}>{prompt}</p>
-          </>
-        )}
-        {!mapboxToken ? (
-          <p className={styles["school-map__prompt"]}>
-            Map unavailable: set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.
-          </p>
+          </aside>
         ) : null}
-      </aside>
+      </div>
       {selected && selectedGrade !== null ? (
         <ClassProfileIsland
           profile={gradeProfile}
