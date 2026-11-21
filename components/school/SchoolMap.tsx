@@ -63,18 +63,28 @@ function StatDials({
   values: Partial<Record<FigureKey, string>> | null;
   loading?: boolean;
 }) {
+  const [counts, rings] = STAT_ROWS;
   return (
     <div className={styles["school-map__dials"]}>
-      {STAT_ROWS.map((row) => (
-        <div className={styles["school-map__dial-row"]} key={row[0].key}>
-          {row.map((stat) => {
-            const value = loading && !values ? "…" : figure(values?.[stat.key]);
-            return (
-              <div
-                className={`${styles["school-map__dial"]} ${styles[`school-map__dial--${stat.key}`]}`}
-                key={stat.key}
-              >
-                <p className={styles["school-map__dial-label"]}>{stat.label}</p>
+      <div className={styles["school-map__tiles"]}>
+        {counts.map((stat) => {
+          const value = loading && !values ? "…" : figure(values?.[stat.key]);
+          return (
+            <article className={styles["school-map__tile"]} key={stat.key}>
+              <p className={styles["school-map__tile-label"]}>{stat.label}</p>
+              <p className={styles["school-map__tile-value"]}>{value}</p>
+            </article>
+          );
+        })}
+      </div>
+      <div className={styles["school-map__dial-row"]}>
+        {rings.map((stat) => {
+          const value = loading && !values ? "…" : figure(values?.[stat.key]);
+          return (
+            <div
+              className={`${styles["school-map__dial"]} ${styles[`school-map__dial--${stat.key}`]}`}
+              key={stat.key}
+            >
                 <span
                   className={styles["school-map__ring"]}
                   style={{ "--dbm-progress": dialProgress(stat.key, value) } as CSSProperties}
@@ -83,11 +93,11 @@ function StatDials({
                 >
                   <span className={styles["school-map__ring-value"]}>{value}</span>
                 </span>
-              </div>
-            );
-          })}
-        </div>
-      ))}
+                <p className={styles["school-map__dial-label"]}>{stat.label}</p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
