@@ -62,7 +62,7 @@ export default async function RoleSelectPage() {
               </p>
 
               <div className="row g-3">
-                <div className="col-12 col-md-6">
+                <div className="col-12 col-md-4">
                   <div className="card h-100 shadow-sm">
                     <div className="card-body d-flex flex-column">
                       <h2 className="h5 mb-2">Tutor</h2>
@@ -110,7 +110,7 @@ export default async function RoleSelectPage() {
                 </div>
 
                 {hasSchoolAdminAccess && (
-                  <div className="col-12 col-md-6">
+                  <div className="col-12 col-md-4">
                     <div className="card h-100 shadow-sm">
                       <div className="card-body d-flex flex-column">
                         <h2 className="h5 mb-2">School Admin</h2>
@@ -135,6 +135,22 @@ export default async function RoleSelectPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="col-12 col-md-4">
+                  <div className="card h-100 shadow-sm">
+                    <div className="card-body d-flex flex-column">
+                      <h2 className="h5 mb-2">Region Inspector</h2>
+                      <p className="text-secondary mb-3">
+                        Open the school map for your region and review learners, courses, completion, and grades.
+                      </p>
+                      <div className="d-grid gap-2 mt-auto">
+                        <Link href="/schools" className="btn btn-outline-primary">
+                          Open region inspector
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
