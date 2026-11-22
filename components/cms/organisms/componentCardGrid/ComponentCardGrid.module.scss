@@ -126,3 +126,811 @@
 .cardGrid__ctaLink {
   @include button-primary;
 }
+
+.cardGrid--coverflow {
+  overflow: hidden;
+  background: #faf8f8;
+}
+
+.cardGrid--media {
+  background: $color-bg;
+}
+
+.cardGrid__eyebrow {
+  @include block-eyebrow;
+  margin-inline: auto;
+}
+
+.mediaGrid {
+  align-items: stretch;
+}
+
+.mediaCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mediaList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mediaItem {
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 26, 46, 0.08);
+}
+
+.mediaTrigger {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 1.05rem 1.15rem;
+  border: 0;
+  background: transparent;
+  color: $color-text;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-highlight;
+    outline-offset: -2px;
+  }
+}
+
+.mediaIndex {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 50%;
+  background: rgba(79, 124, 255, 0.12);
+  color: $color-accent;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mediaItemOpen .mediaIndex {
+  background: $color-accent;
+  color: #fff;
+}
+
+.mediaTitle {
+  flex: 1 1 auto;
+  font-family: $font-family-heading;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mediaChevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: $color-text-muted;
+  transition: transform 0.35s ease;
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+}
+
+.mediaItemOpen .mediaChevron {
+  color: $color-accent;
+  transform: rotate(180deg);
+}
+
+.mediaPanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s ease;
+}
+
+.mediaItemOpen .mediaPanel {
+  grid-template-rows: 1fr;
+}
+
+.mediaPanelInner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 1.15rem;
+  color: $color-text-muted;
+  font-size: 1rem;
+  line-height: 1.7;
+
+  > *:last-child {
+    margin-bottom: 0;
+    padding-bottom: 1.15rem;
+  }
+}
+
+.mediaPanel__paragraph {
+  margin: 0 0 0.6rem;
+}
+
+.mediaStageWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mediaStage {
+  position: relative;
+  width: min(100%, 32rem);
+  aspect-ratio: 1 / 1;
+}
+
+.mediaBlob {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background: #7dcf6a;
+  transition: background-color 0.45s ease;
+}
+
+.mediaSlides {
+  position: absolute;
+  inset: 0;
+}
+
+.mediaSlide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(48px);
+  transition: opacity 0.45s ease, transform 0.5s ease, visibility 0.45s ease;
+
+  img {
+    object-fit: contain;
+    padding: 7%;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .mediaStageWrap {
+    order: -1;
+  }
+
+  .mediaStage {
+    width: min(100%, 22rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mediaPanel,
+  .mediaChevron,
+  .mediaSlide,
+  .mediaBlob {
+    transition: none;
+  }
+}
+
+.mediaSlideActive {
+  z-index: 1;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.mediaSlideLeaving {
+  opacity: 0;
+  transform: translateX(-36px);
+}
+
+.cardGrid--hover {
+  background: $color-primary-dark;
+  color: #fff;
+
+  .cardGrid__title,
+  .cardGrid__intro {
+    color: inherit;
+  }
+
+  .cardGrid__intro {
+    opacity: 0.78;
+  }
+}
+
+.hoverList {
+  --hover-card-height: 28.5rem;
+  --hover-grow: 2.55;
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  min-height: var(--hover-card-height);
+
+  &[data-count="2"] {
+    --hover-grow: 1.85;
+  }
+
+  &[data-count="3"] {
+    --hover-grow: 2.2;
+  }
+}
+
+.hoverCard {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  background-color: #eef1f4;
+  background-image: repeating-linear-gradient(
+    -32deg,
+    transparent,
+    transparent 11px,
+    rgba(79, 124, 255, 0.08) 11px,
+    rgba(79, 124, 255, 0.08) 12px
+  );
+  color: $color-text;
+  cursor: pointer;
+  transition: flex-grow 0.65s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s ease;
+
+  &:focus-visible {
+    outline: 2px solid $color-highlight;
+    outline-offset: 3px;
+  }
+}
+
+.hoverCardActive {
+  flex-grow: var(--hover-grow);
+  color: #fff;
+}
+
+.hoverCard__photo,
+.hoverCard__shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hoverCard__photo {
+  background: $color-primary-dark;
+
+  img {
+    object-fit: cover;
+  }
+}
+
+.hoverCard__photo,
+.hoverCard__shade {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.hoverCard__photo {
+  transform: scale(1.04);
+  transition: opacity 0.45s ease, transform 0.65s ease;
+}
+
+.hoverCard__shade {
+  background-color: color-mix(in srgb, var(--hover-overlay-color, #0f1a2e) var(--hover-overlay-opacity, 70%), transparent);
+}
+
+.hoverCardActive .hoverCard__photo {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.hoverCardActive .hoverCard__shade {
+  opacity: 1;
+}
+
+.hoverCard__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  width: 100%;
+  min-height: var(--hover-card-height);
+  padding: 1.6rem 1.45rem 1.35rem;
+  pointer-events: none;
+}
+
+.hoverCard__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+.hoverCard__copy {
+  margin-top: auto;
+}
+
+.hoverCard__title {
+  margin: 0;
+  color: $color-text;
+  font-family: $font-family-heading;
+  font-size: clamp(1.2rem, 1.5vw, 1.55rem);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.hoverCardActive .hoverCard__title {
+  color: #fff;
+}
+
+.hoverCard__text {
+  margin: 0.65rem 0 0;
+  color: $color-text-muted;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.hoverCardActive .hoverCard__text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hoverCard__footer {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+  margin-top: 0;
+  padding-top: 1.25rem;
+}
+
+.hoverCard__cta {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.hoverCardActive .hoverCard__cta {
+  display: inline-flex;
+}
+
+.hoverCard__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: $color-text-muted;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.hoverCardActive .hoverCard__hint {
+  display: none;
+}
+
+.hoverCard__hintIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid rgba(26, 44, 78, 0.18);
+  border-radius: 50%;
+
+  svg {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+}
+
+.hoverCard__hintTap {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .hoverList {
+    --hover-card-height: auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .hoverCard {
+    flex: 0 0 auto;
+    min-height: 14.5rem;
+  }
+
+  .hoverCardActive {
+    flex-grow: 0;
+    min-height: 22rem;
+  }
+
+  .hoverCard__inner {
+    min-height: 14.5rem;
+  }
+
+  .hoverCardActive .hoverCard__inner {
+    min-height: 22rem;
+  }
+
+  .hoverCard__hintHover {
+    display: none;
+  }
+
+  .hoverCard__hintTap {
+    display: inline;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoverCard,
+  .hoverCard__photo,
+  .hoverCard__shade {
+    transition: none;
+  }
+}
+
+.cardGrid__carousel {
+  --cover-card-width: min(950px, 72vw);
+  --cover-card-height: min(38.25rem, 72vw);
+  --cover-gap: 1.5rem;
+}
+
+.cardGrid__coverflow {
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 4px;
+  }
+}
+
+.cardGrid__viewport {
+  position: relative;
+  overflow: hidden;
+  padding-left: calc(50% - var(--cover-card-width) / 2);
+}
+
+.cardGrid__coverTrack {
+  display: flex;
+  align-items: stretch;
+  gap: var(--cover-gap);
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.cardGrid__coverTrackPending {
+  transform: translateX(calc(-1 * (var(--cover-card-width) + var(--cover-gap))));
+}
+
+.cardGrid__coverTrackMotion {
+  transition: transform 0.7s ease;
+}
+
+.cardGrid__coverSlide {
+  position: relative;
+  display: flex;
+  flex: 0 0 var(--cover-card-width);
+  height: var(--cover-card-height);
+  overflow: hidden;
+  border-radius: 1.55rem;
+  background: $color-primary-dark;
+  box-shadow: 0 0 40px rgba(0, 48, 73, 0.18);
+  transform: scale(0.92);
+  opacity: 0.55;
+  transform-origin: center center;
+  transition: transform 0.7s ease, opacity 0.7s ease;
+
+  &[aria-hidden="true"] {
+    pointer-events: none;
+  }
+
+  .cardGrid__card,
+  .coverCard {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.cardGrid__coverSlideActive {
+  transform: scale(1);
+  opacity: 1;
+  z-index: 1;
+}
+
+.cardGrid__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.75rem;
+  height: 3.75rem;
+  padding: 0;
+  border: 1px solid rgba(26, 44, 78, 0.2);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: $color-text;
+  box-shadow: 0 8px 24px rgba(15, 26, 46, 0.12);
+  transform: translateY(-50%);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: #fff;
+  }
+}
+
+.cardGrid__navPrev {
+  left: max(0.5rem, calc(50% - (var(--cover-card-width) / 2) - 1.875rem));
+}
+
+.cardGrid__navNext {
+  right: max(0.5rem, calc(50% - (var(--cover-card-width) / 2) - 1.875rem));
+}
+
+.cardGrid__stageControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+  padding-inline: 1rem;
+}
+
+.cardGrid__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.cardGrid__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: rgba(26, 44, 78, 0.22);
+  cursor: pointer;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.cardGrid__dotActive {
+  width: 2.7rem;
+  background: $color-highlight;
+}
+
+.cardGrid__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardGrid__progressCurrent,
+.cardGrid__progressTotal {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.cardGrid__progressCurrent {
+  color: $color-highlight;
+}
+
+.cardGrid__progressRule {
+  display: block;
+  width: 1.5rem;
+  height: 2px;
+  background: rgba(26, 44, 78, 0.25);
+}
+
+.cardGrid__progressTotal {
+  color: $color-text-muted;
+}
+
+.cardGrid__pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.cardGrid__pill {
+  padding: 0.625rem 1.25rem;
+  border: 1px solid rgba(26, 44, 78, 0.2);
+  border-radius: $border-radius-pill;
+  background: rgba(255, 255, 255, 0.9);
+  color: $color-text;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cardGrid__pillActive {
+  border-color: $color-highlight;
+  background: $color-highlight;
+  color: #fff;
+}
+
+.cardGrid__fallback {
+  display: none;
+  gap: 1.5rem;
+  grid-template-columns: repeat(var(--card-grid-slides-mobile, 1), minmax(0, 1fr));
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(var(--card-grid-slides-tablet, 2), minmax(0, 1fr));
+  }
+
+  @media (min-width: 992px) {
+    grid-template-columns: repeat(var(--card-grid-slides-desktop, 3), minmax(0, 1fr));
+  }
+}
+
+.coverCard {
+  position: relative;
+  display: flex;
+  min-height: 28rem;
+  overflow: hidden;
+  border-radius: 1.55rem;
+  background: $color-primary-dark;
+  color: #fff;
+}
+
+.coverCard__photo {
+  object-fit: cover;
+}
+
+.coverCard__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 26, 46, 0.2) 0%, rgba(15, 26, 46, 0.45) 45%, rgba(15, 26, 46, 0.72) 100%);
+  pointer-events: none;
+}
+
+.coverCard__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.coverCard__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-pill;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.coverCard__main {
+  max-width: 32.5rem;
+}
+
+.coverCard__title {
+  margin: 0;
+  color: #fff;
+  font-family: $font-family-heading;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.coverCard__text {
+  margin: 0.85rem 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+.coverCard__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-pill;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  backdrop-filter: blur(20px);
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+}
+
+@mixin card-grid-busted {
+  .cardGrid__coverflow {
+    display: none;
+  }
+
+  .cardGrid__fallback {
+    display: grid;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .cardGrid__carousel {
+    --cover-card-width: min(22rem, calc(100vw - 4.5rem));
+    --cover-card-height: 28rem;
+  }
+
+  .cardGrid__nav {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .cardGrid__navPrev {
+    left: 0.5rem;
+  }
+
+  .cardGrid__navNext {
+    right: 0.5rem;
+  }
+
+  .coverCard__title {
+    font-size: 1.5rem;
+  }
+
+  .coverCard__text {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardGrid__coverSlide,
+  .cardGrid__coverTrackMotion,
+  .cardGrid__dot {
+    transition: none;
+  }
+}
+
+.cardGrid__carousel--md-up {
+  @media (max-width: 767.98px) {
+    @include card-grid-busted;
+  }
+}
+
+.cardGrid__carousel--md-dn {
+  @media (min-width: 992px) {
+    @include card-grid-busted;
+  }
+}
+
+.cardGrid__carousel--sm {
+  @media (min-width: 768px) {
+    @include card-grid-busted;
+  }
+}
+
+.cardGrid__carousel--lg {
+  @media (max-width: 991.98px) {
+    @include card-grid-busted;
+  }
+}
