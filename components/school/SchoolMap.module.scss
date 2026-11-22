@@ -526,6 +526,7 @@
   &__donut {
     width: 100%;
     transform: rotate(-90deg);
+    overflow: visible;
 
     circle {
       fill: none;
@@ -897,8 +898,10 @@
   }
 
   .school-map__avatar {
+    margin-left: 10px;
     background: #312e81;
     color: #f5f3ff;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.7);
   }
 
   .school-map__deck-scrim {
