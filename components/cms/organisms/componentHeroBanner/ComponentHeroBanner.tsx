@@ -19,10 +19,9 @@ export default function ComponentHeroBanner({ data, renderContext }: ComponentHe
   const resolvedHighlightColor = data.blockTheme?.secondaryTextColor || data.highlightColor || "inherit";
 
   const styleVars: CSSProperties = {
-    backgroundColor: data.blockTheme?.backgroundColor || "#4338ca",
+    backgroundColor: data.blockTheme?.backgroundColor || "#0f1a2e",
     color: resolvedTextColor,
-    "--highlight-color": resolvedHighlightColor,
-    "--hero-overlay-color": data.blockTheme?.backgroundColor || "#ca723899",
+    "--highlight-color": resolvedHighlightColor === "inherit" ? "#e8772e" : resolvedHighlightColor,
   } as CSSProperties;
 
   const heroClassNames = [styles.heroBanner];

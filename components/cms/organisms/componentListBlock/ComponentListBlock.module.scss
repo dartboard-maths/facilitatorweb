@@ -1,16 +1,10 @@
+@use "../../dbm-theme" as *;
+
 .listBlock {
+  @include section-padding;
   width: 100%;
-  padding: 4rem 0;
-}
-
-.listBlock--dark {
-  background-color: #111827;
-  color: #fff;
-}
-
-.listBlock--light {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background: $color-bg;
+  color: $color-text;
 }
 
 .listBlock__container {
@@ -18,23 +12,21 @@
 }
 
 .listBlock__title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 1.25rem;
+  @include section-title;
   text-align: center;
-  color: #111827;
+
+  &::after {
+    margin-inline: auto;
+  }
 }
 
 .listBlock__copy {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #4b5563;
+  max-width: 36rem;
+  margin: -0.35rem auto 2.5rem;
+  color: $color-text-muted;
+  font-size: 1.05rem;
+  line-height: 1.7;
   text-align: center;
-  margin-bottom: 2.25rem;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .listBlock__items {
@@ -45,52 +37,61 @@
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  padding: 1.5rem;
-  background: var(--list-item-bg, #fff);
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 30px rgb(15 23 42 / 6%);
   height: 100%;
+  padding: 1.25rem 1.15rem;
+  border: 0;
+  border-radius: 1.25rem;
+  background: var(--list-item-bg, #{$color-bg});
+  box-shadow: 0 10px 28px rgba(26, 44, 78, 0.08);
+}
+
+.listItem__imageWrapper,
+.listItem__image {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
 }
 
 .listItem__imageWrapper {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-}
-
-.listItem__image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.95rem;
+  background-image: linear-gradient(145deg, var(--list-icon-circle-color, #{$color-accent}) 0%, color-mix(in srgb, var(--list-icon-circle-color, #{$color-accent}) 62%, #{$color-primary}) 100%);
 }
 
 .listItem__imageStandard {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
-  border-radius: 0.35rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  object-fit: contain;
+  border-radius: 0;
 }
 
 .listItem__content {
   flex: 1;
+  min-width: 0;
 }
 
 .listItem__title {
-  font-size: 1.1rem;
+  margin: 0 0 0.35rem;
+  color: var(--list-icon-color, #{$color-text});
+  font-family: $font-family-heading;
+  font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.3;
-  color: #111827;
-  margin: 0 0 0.5rem;
 }
 
-.listItem__copy {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #4b5563;
+.listItem__copy,
+.listBlock__copyParagraph,
+.listBlock__copyHeading1,
+.listBlock__copyHeading2,
+.listBlock__copyHeading3,
+.listBlock__copyHeading4,
+.listBlock__copyHeading5,
+.listBlock__copyHeading6 {
+  color: $color-text-muted;
+  font-size: 0.9375rem;
+  line-height: 1.65;
 }
 
 .listBlock__copyParagraph {
@@ -108,6 +109,8 @@
 .listBlock__copyHeading5,
 .listBlock__copyHeading6 {
   margin: 0 0 0.4rem;
+  color: $color-text;
+  font-family: $font-family-heading;
 }
 
 .listBlock__copyList,
@@ -116,20 +119,57 @@
   padding-left: 1.2rem;
 }
 
+.listBlock__copyListItem {
+  margin: 0 0 0.25rem;
+}
+
 .listBlock__copyQuote {
-  border-left: 4px solid #cbd5e1;
-  padding-left: 0.75rem;
   margin: 0.75rem 0;
+  padding-left: 0.75rem;
+  border-left: 4px solid $color-highlight;
   font-style: italic;
 }
 
 .listBlock__copyHr {
-  border: none;
-  border-top: 1px solid #e5e7eb;
   margin: 0.75rem 0;
+  border: 0;
+  border-top: 1px solid $color-border;
 }
 
 .listBlock__copyLink {
-  color: #1d4ed8;
-  text-decoration: underline;
+  @include text-link;
+}
+
+.listBlock--light {
+  background: $color-bg-alt;
+}
+
+.listBlock--dark {
+  background: $color-primary-dark;
+  color: #fff;
+
+  .listBlock__title,
+  .listBlock__copy,
+  .listItem__title {
+    color: #fff;
+  }
+
+  .listItem {
+    background: rgb(255 255 255 / 8%);
+    box-shadow: none;
+  }
+
+  .listItem__copy,
+  .listBlock__copyParagraph {
+    color: rgb(255 255 255 / 82%);
+  }
+
+  .listBlock__copyLink {
+    color: #fff;
+
+    &:hover,
+    &:focus-visible {
+      color: $color-highlight;
+    }
+  }
 }

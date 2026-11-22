@@ -3,10 +3,11 @@ import { redirect } from "next/navigation";
 import { SchoolMap, type SchoolQuery } from "../../components/school/SchoolMap";
 import { getMarketplaceSession } from "../../lib/auth/session";
 import { fetchInspectorSchools } from "../../lib/schools/inspector-directory";
+import { fetchPublicSchools } from "../../lib/schools/public-directory";
 
 export const metadata: Metadata = {
   title: "Find a school",
-  description: "School locations and stats for the signed-in region inspector.",
+  description: "Browse school locations and summary stats, or open the signed-in region inspector.",
 };
 
 type SchoolsPageProps = {
@@ -26,14 +27,27 @@ function schoolsNextPath(query: SchoolQuery): string {
 
 export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
   const { sso, ...query } = searchParams ?? {};
-  const session = sso === "1" ? null : await getMarketplaceSession();
-  if (!session) {
+  if (sso === "1") {
     redirect(`/api/auth/moodle/start?next=${encodeURIComponent(schoolsNextPath(query))}`);
+  }
+  const session = await getMarketplaceSession();
+  if (!session) {
+    const directory = await fetchPublicSchools();
+    return (
+      <main>
+        <SchoolMap
+          mode="public"
+          query={query}
+          pins={directory.schools}
+          access={directory.access === "ready" ? "ready" : "unavailable"}
+        />
+      </main>
+    );
   }
   const directory = await fetchInspectorSchools(session.moodleUserId);
   return (
     <main>
-      <SchoolMap query={query} pins={directory.schools} access={directory.access} />
+      <SchoolMap mode="inspector" query={query} pins={directory.schools} access={directory.access} />
     </main>
   );
 }

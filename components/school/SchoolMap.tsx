@@ -10,6 +10,7 @@ import type {
   InspectorSchoolFigures,
   InspectorSchoolPin,
 } from "../../lib/schools/inspector-directory";
+import type { PublicSchoolPin } from "../../lib/schools/public-directory";
 import { ClassProfileIsland } from "./ClassProfileIsland";
 import { CountUp, useHudReady } from "./hud-motion";
 import { LearnerBattleDeck } from "./LearnerBattleDeck";
@@ -97,10 +98,12 @@ function StatDials({
   values,
   loading = false,
   motionKey = "stats",
+  tilesOnly = false,
 }: {
   values: Partial<Record<FigureKey, string>> | null;
   loading?: boolean;
   motionKey?: string;
+  tilesOnly?: boolean;
 }) {
   const ready = useHudReady(Boolean(values) && !loading);
   const [counts, rings] = STAT_ROWS;
@@ -119,6 +122,7 @@ function StatDials({
           );
         })}
       </div>
+      {tilesOnly ? null : (
       <div className={styles["school-map__dial-row"]}>
         {rings.map((stat, index) => {
           const value = loading && !values ? "…" : figure(values?.[stat.key]);
@@ -141,6 +145,7 @@ function StatDials({
           );
         })}
       </div>
+      )}
     </div>
   );
 }
@@ -204,7 +209,24 @@ function frameSchools(map: mapboxgl.Map, schoolPins: InspectorSchoolPin[], durat
   });
 }
 
-function promptFor(access: InspectorDirectoryAccess, hasSchools: boolean, hasSelection: boolean): string {
+function promptFor(
+  mode: "public" | "inspector",
+  access: InspectorDirectoryAccess,
+  hasSchools: boolean,
+  hasSelection: boolean,
+): string {
+  if (mode === "public") {
+    if (access !== "ready") {
+      return "School list unavailable.";
+    }
+    if (!hasSchools) {
+      return "No schools have a location and results yet.";
+    }
+    if (!hasSelection) {
+      return "Choose a school to see its stats.";
+    }
+    return "";
+  }
   if (access === "not_inspector") {
     return "This account is not a region inspector.";
   }
@@ -220,14 +242,31 @@ function promptFor(access: InspectorDirectoryAccess, hasSchools: boolean, hasSel
   return "";
 }
 
+function summaryFigures(pin: InspectorSchoolPin | PublicSchoolPin | null): InspectorSchoolFigures | null {
+  if (!pin || !("figures" in pin)) {
+    return null;
+  }
+  return {
+    learners: pin.figures.learners,
+    courses: pin.figures.courses,
+    completion: pin.figures.completion,
+    grade: UNKNOWN,
+    competencies: UNKNOWN,
+    badges: UNKNOWN,
+    grades: [],
+  };
+}
+
 export function SchoolMap({
   query,
   pins,
   access,
+  mode = "inspector",
 }: {
   query: SchoolQuery;
-  pins: InspectorSchoolPin[];
+  pins: Array<InspectorSchoolPin | PublicSchoolPin>;
   access: InspectorDirectoryAccess;
+  mode?: "public" | "inspector";
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -238,7 +277,7 @@ export function SchoolMap({
   const linkedPin = pins.find((pin) => pin.id === linkedId) ?? null;
   const [selectedId, setSelectedId] = useState(linkedPin?.id ?? "");
   const [figures, setFigures] = useState<InspectorSchoolFigures | null>(
-    linkedPin ? figuresFromQuery(query) : null,
+    mode === "public" ? summaryFigures(linkedPin) : linkedPin ? figuresFromQuery(query) : null,
   );
   const [loading, setLoading] = useState(false);
   const [gradesOpen, setGradesOpen] = useState(false);
@@ -255,6 +294,10 @@ export function SchoolMap({
 
   selectRef.current = (id: string) => {
     setSelectedId(id);
+    if (mode === "public") {
+      setFigures(summaryFigures(pins.find((pin) => pin.id === id) ?? null));
+      return;
+    }
     setFigures(id === linkedPin?.id ? figuresFromQuery(query) : null);
   };
 
@@ -328,7 +371,7 @@ export function SchoolMap({
   }, [selectedId, pins, theme]);
 
   useEffect(() => {
-    if (!selectedId) {
+    if (mode === "public" || !selectedId) {
       return;
     }
     const controller = new AbortController();
@@ -358,7 +401,7 @@ export function SchoolMap({
         }
       });
     return () => controller.abort();
-  }, [linkedPin?.id, selectedId]);
+  }, [linkedPin?.id, mode, selectedId]);
 
   useEffect(() => {
     setGradesOpen(false);
@@ -422,13 +465,17 @@ export function SchoolMap({
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedGrade, selectedLearnerKey]);
 
-  const prompt = promptFor(access, pins.length > 0, Boolean(selected));
+  const isPublic = mode === "public";
+  const prompt = promptFor(mode, access, pins.length > 0, Boolean(selected));
+  const signInHref = selected
+    ? `/api/auth/moodle/start?next=${encodeURIComponent(`/schools?school=${selected.id}`)}`
+    : "/api/auth/moodle/start?next=%2Fschools";
   const openLearner = gradeProfile?.progress.find((row) => row.learnerKey === selectedLearnerKey) ?? null;
 
   return (
     <section
       className={`${styles["school-map"]} ${theme === "dark" ? styles["school-map--dark"] : ""}`}
-      aria-label="Region Inspector"
+      aria-label={isPublic ? "Find a school" : "Region Inspector"}
     >
       <div ref={mapContainerRef} className={styles["school-map__canvas"]} />
       <button
@@ -451,7 +498,7 @@ export function SchoolMap({
             <Link href="/" className="btn btn-link p-0 text-decoration-none" aria-label="Back to homepage">
               ←
             </Link>
-            <h2 className={styles["school-map__heading"]}>Region Inspector</h2>
+            <h2 className={styles["school-map__heading"]}>{isPublic ? "Find a school" : "Region Inspector"}</h2>
             <button
               type="button"
               className={styles["school-map__theme"]}
@@ -478,9 +525,13 @@ export function SchoolMap({
         {selected ? (
           <aside className={styles["school-map__school"]} aria-label={selected.name}>
             <p className={styles["school-map__title"]}>{selected.name}</p>
-            <p className={styles["school-map__id"]}>{selected.id}</p>
-            <StatDials values={figures} loading={loading && !figures} />
-            {figures && figures.grades.length > 0 ? (
+            {isPublic ? null : <p className={styles["school-map__id"]}>{selected.id}</p>}
+            <StatDials values={figures} loading={loading && !figures} tilesOnly={isPublic} />
+            {isPublic ? (
+              <Link className={styles["school-map__grades-cta"]} href={signInHref}>
+                Sign in
+              </Link>
+            ) : figures && figures.grades.length > 0 ? (
               <button
                 type="button"
                 className={styles["school-map__grades-cta"]}
@@ -501,7 +552,7 @@ export function SchoolMap({
             ) : null}
           </aside>
         ) : null}
-        {selected && gradesOpen && figures && figures.grades.length > 0 ? (
+        {!isPublic && selected && gradesOpen && figures && figures.grades.length > 0 ? (
           <aside className={styles["school-map__grades-island"]} aria-label="Grades">
             <section className={styles["school-map__grades"]}>
               {figures.grades.map((grade) => {
@@ -530,7 +581,7 @@ export function SchoolMap({
           </aside>
         ) : null}
       </div>
-      {selected && selectedGrade !== null ? (
+      {!isPublic && selected && selectedGrade !== null ? (
         <ClassProfileIsland
           profile={gradeProfile}
           loading={gradeLoading}

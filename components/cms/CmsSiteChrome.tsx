@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CmsFooter, CmsHeader, CmsLink, CmsRenderContext } from "../../lib/cms/contentful";
 import { toParagraphs } from "../../lib/cms/contentful";
 import CmsSiteHeaderClient from "./CmsSiteHeaderClient";
+import styles from "./CmsSiteChrome.module.scss";
 
 type CmsSiteFooterProps = {
   footer?: CmsFooter;
@@ -42,7 +43,7 @@ export function CmsSiteHeader({ header, renderContext }: { header?: CmsHeader; r
 }
 
 function FooterMenuItem({ link }: { link: CmsLink }) {
-  return <CmsLinkItem link={link} className="link-light text-decoration-none" />;
+  return <CmsLinkItem link={link} className={styles.siteFooter__link} />;
 }
 
 export function CmsSiteFooter({ footer }: CmsSiteFooterProps) {
@@ -51,20 +52,20 @@ export function CmsSiteFooter({ footer }: CmsSiteFooterProps) {
   }
 
   return (
-    <footer className="bg-dark text-light">
-      <div className="container py-5">
-        {footer.title ? <h2 className="h5 mb-3">{footer.title}</h2> : null}
+    <footer className={styles.siteFooter}>
+      <div className={`container ${styles.siteFooter__inner}`}>
+        {footer.title ? <h2 className={styles.siteFooter__title}>{footer.title}</h2> : null}
         {toParagraphs(footer.copy).map((paragraph, index) => (
-          <p className="text-light-emphasis mb-2" key={`${footer.id}-copy-${index}`}>
+          <p className={styles.siteFooter__copy} key={`${footer.id}-copy-${index}`}>
             {paragraph}
           </p>
         ))}
 
-        <div className="row g-4 mt-1">
+        <div className={`row g-4 ${styles.siteFooter__menus}`}>
           {footer.footerMenus.map((menu) => (
             <div className="col-12 col-md-6" key={menu.id}>
-              {!menu.hideTitle && menu.title ? <h3 className="h6 mb-2">{menu.title}</h3> : null}
-              <ul className="list-unstyled mb-0 d-grid gap-2">
+              {!menu.hideTitle && menu.title ? <h3 className={styles.siteFooter__menuTitle}>{menu.title}</h3> : null}
+              <ul className={`${styles.siteFooter__menu} d-grid gap-2`}>
                 {menu.links.map((item) => {
                   if (item.kind === "dropdown") {
                     return item.links.map((subItem) => (
@@ -86,8 +87,8 @@ export function CmsSiteFooter({ footer }: CmsSiteFooterProps) {
         </div>
       </div>
       {footer.subfooterCopy ? (
-        <div className="border-top border-secondary-subtle">
-          <div className="container py-3 small text-light-emphasis">{footer.subfooterCopy}</div>
+        <div className={styles.siteFooter__sub}>
+          <div className={`container ${styles.siteFooter__subInner}`}>{footer.subfooterCopy}</div>
         </div>
       ) : null}
     </footer>

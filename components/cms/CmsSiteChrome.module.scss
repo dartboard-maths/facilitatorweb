@@ -1,115 +1,200 @@
+@use "./dbm-theme" as *;
+
 .siteHeader {
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
   position: sticky;
   top: 0;
-  transition: box-shadow 0.25s ease;
-  width: 100%;
   z-index: 1000;
-}
-
-.siteHeader--scrolled {
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+  width: 100%;
+  padding: 0.75rem 0 0;
+  background: transparent;
+  transform: translateY(0);
+  transition: transform 0.35s ease;
 }
 
 .siteHeader--hidden {
-  transform: translateY(-100%);
+  transform: translateY(calc(-100% - 0.5rem));
+  pointer-events: none;
+}
+
+.siteHeader__bar {
+  width: min(100% - 2rem, 75rem);
+  margin-inline: auto;
+  padding: 0 0.35rem;
+  border-radius: $border-radius-pill;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 8px 32px rgba(15, 26, 46, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.siteHeader--scrolled .siteHeader__bar {
+  background: rgb(255 255 255 / 96%);
 }
 
 .siteHeader__container {
-  align-items: center;
   display: flex;
-  gap: 1rem;
+  align-items: center;
   justify-content: space-between;
-  min-height: 76px;
-  padding: 0.75rem 0;
+  gap: 1.5rem;
+  min-height: 5.5rem;
+  padding: 0.75rem 1.5rem;
 }
 
 .siteHeader__logoLink {
-  align-items: center;
-  color: #0f172a;
   display: inline-flex;
-  font-size: 1.125rem;
+  flex-shrink: 0;
+  align-items: center;
+  color: $color-text;
+  font-family: $font-family-heading;
+  font-size: 1.25rem;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
   text-decoration: none;
 }
 
 .siteHeader__logoImage {
   display: block;
-  height: 48px;
-  object-fit: contain;
   width: auto;
+  height: 3.75rem;
+  object-fit: contain;
 }
 
 .siteHeader__nav {
-  align-items: center;
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
-  gap: 1rem;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem 1.25rem;
   margin-left: auto;
 }
 
-.siteHeader__link {
-  color: #1f2937;
-  font-size: 0.98rem;
+.siteHeader__link,
+.siteHeader__dropdownToggle {
+  color: $color-text;
+  font-size: 0.95rem;
   font-weight: 500;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 .siteHeader__link:hover,
-.siteHeader__link:focus-visible {
-  color: #1f2937;
-  opacity: 0.78;
+.siteHeader__link:focus-visible,
+.siteHeader__dropdownToggle:hover,
+.siteHeader__dropdownToggle:focus-visible {
+  color: $color-highlight;
+  opacity: 1;
 }
 
 .siteHeader__dropdown {
   position: relative;
 }
 
-.siteHeader__dropdownToggle {
-  background: transparent;
-  border: 0;
-  color: #1f2937;
-  font-size: 0.98rem;
-  font-weight: 500;
-  padding: 0;
-  text-decoration: none;
-}
-
-.siteHeader__dropdownToggle:hover,
-.siteHeader__dropdownToggle:focus-visible {
-  color: #1f2937;
-  opacity: 0.78;
-}
-
 .siteHeader__dropdownMenu {
-  border-radius: 0.5rem;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
   min-width: 12rem;
+  border: 0;
+  border-radius: 1rem;
+  box-shadow: 0 12px 30px rgba(26, 44, 78, 0.12);
 }
 
 .siteHeader__dropdownItem {
-  color: #1f2937;
+  color: $color-text;
   font-size: 0.95rem;
   text-decoration: none;
 }
 
 .siteHeader__dropdownItem:hover,
 .siteHeader__dropdownItem:focus-visible {
-  color: #111827;
+  color: $color-highlight;
+  background: $color-bg-alt;
+}
+
+.siteFooter {
+  background: #111111;
+  color: #c8c8c8;
+}
+
+.siteFooter__inner {
+  padding-block: 3rem;
+}
+
+.siteFooter__title,
+.siteFooter__menuTitle {
+  color: #fff;
+  font-family: $font-family-heading;
+}
+
+.siteFooter__title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+
+  @include heading-accent(2.25rem, 2px);
+}
+
+.siteFooter__copy {
+  max-width: 36rem;
+  margin: 0 0 0.5rem;
+  color: #c8c8c8;
+}
+
+.siteFooter__menus {
+  margin-top: 1.5rem;
+}
+
+.siteFooter__menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siteFooter__menuTitle {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid #004b5e;
+  font-size: 0.95rem;
+}
+
+.siteFooter__link {
+  color: #c8c8c8;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+  }
+}
+
+.siteFooter__sub {
+  border-top: 1px solid #2a2a2a;
+  color: #c8c8c8;
+  font-size: 0.875rem;
+}
+
+.siteFooter__subInner {
+  padding-block: 1rem;
 }
 
 @media (max-width: 991.98px) {
+  .siteHeader {
+    padding-top: 0.5rem;
+  }
+
+  .siteHeader__bar {
+    border-radius: 1.5rem;
+  }
+
   .siteHeader__container {
     align-items: flex-start;
     flex-direction: column;
+    gap: 0.75rem;
     min-height: auto;
+    padding-block: 1rem;
   }
 
   .siteHeader__nav {
-    margin-left: 0;
+    justify-content: flex-start;
     width: 100%;
+    margin-left: 0;
   }
 }

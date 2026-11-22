@@ -1,216 +1,186 @@
+@use "../../dbm-theme" as *;
+
 .heroBanner {
   position: relative;
-  color: #fff;
-  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin-top: calc(var(--dbm-header-offset, 6.25rem) * -1);
+  padding: 7.5rem 0 6rem;
+  color: #fff;
+  background: $color-primary-dark;
+  text-align: center;
 }
 
-.heroBanner--page-hero {
-  margin-top: 0 !important;
-  max-height: 300px;
-  min-height: 300px !important;
-}
-
-.heroBanner--page-hero .heroBanner__content {
-  height: 300px;
-  min-height: 300px !important;
-  padding: 1.5rem 0;
-}
-
-.heroBanner__background {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.heroBanner__backgroundOverlay {
-  position: absolute;
-  inset: 0;
-  background-color: var(--hero-overlay-color, #ca723899);
-}
-
+.heroBanner__background,
+.heroBanner__backgroundOverlay,
 .heroBanner__svg {
   position: absolute;
   inset: 0;
-  z-index: 5;
+}
+
+.heroBanner__background {
+  z-index: 0;
+}
+
+.heroBanner__backgroundOverlay {
+  z-index: 1;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.2) 0%, $color-hero-mid 50%, $color-hero-end 100%);
+  pointer-events: none;
+}
+
+.heroBanner__svg {
+  z-index: 2;
+  pointer-events: none;
 }
 
 .heroBanner__content {
   position: relative;
-  z-index: 10;
-  padding: 2.5rem 0;
-  min-height: 100%;
+  z-index: 3;
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: inherit;
+  padding: 0;
 }
 
 .heroBanner__inner {
-  padding: 0 1rem;
+  width: min(100%, 50rem);
+  margin-inline: auto;
+  padding: 0 1.5rem;
 }
 
 .heroBanner__title {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 700;
-  margin: 0 0 1rem;
+  margin: 0 0 1.5rem;
+  color: inherit;
+  font-family: $font-family-heading;
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+
+  @include heading-accent(4.5rem, 3px);
+
+  &::after {
+    margin-inline: auto;
+  }
 }
 
 .heroBanner__copy {
-  max-width: none;
+  max-width: 50rem;
+  margin-inline: auto;
+  font-family: $font-family-base;
+  font-size: clamp(1rem, 2vw, 1.375rem);
+  font-weight: 400;
+  line-height: 1.7;
 }
 
 .heroBanner__copyParagraph {
-  font-size: 1rem;
-  line-height: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.5rem;
 }
 
-.heroBanner__copyHeading1 {
-  line-height: normal;
+.heroBanner__copyHeading1,
+.heroBanner__copyHeading2,
+.heroBanner__copyHeading3 {
+  margin: 0 0 1rem;
+  color: inherit;
+  font-family: $font-family-heading;
   font-weight: 700;
-  margin-bottom: 1rem;
+  line-height: 1.2;
 }
 
 .heroBanner__copyHeading2 {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
 }
 
 .heroBanner__copyHeading3 {
   font-size: 1.5rem;
-  line-height: 2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
 }
 
-.heroBanner__copyBold {
-  color: var(--highlight-color, inherit) !important;
+.heroBanner__copyBold,
+.heroBanner__copy strong {
+  color: var(--highlight-color, #{$color-highlight});
   font-weight: 700;
 }
 
 .heroBanner__copyCode {
-  background-color: rgb(255 255 255 / 20%);
-  padding: 0.25rem;
+  padding: 0.25rem 0.4rem;
   border-radius: 0.25rem;
-}
-
-.heroBanner__copy strong {
-  color: var(--highlight-color, inherit) !important;
+  background: rgb(255 255 255 / 20%);
 }
 
 .heroBanner__copyLink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 140px;
-  padding: 0.85rem 1.5rem;
-  text-decoration: none;
-  font-size: 1rem;
-  line-height: 1;
-  font-weight: 500;
-  transition: opacity 0.2s ease;
-}
+  @include button-primary;
+  min-width: 8.75rem;
+  margin-top: 0.25rem;
+  background: var(--highlight-color, #{$color-highlight});
+  border-color: var(--highlight-color, #{$color-highlight});
 
-.heroBanner__copyParagraph .heroBanner__copyLink:first-child {
-  background: var(--highlight-color, #0f2745);
-  border: 1px solid var(--highlight-color, #0f2745);
-  color: #fff;
-}
-
-.heroBanner__copyParagraph .heroBanner__copyLink:nth-child(2) {
-  background: transparent;
-  border: 2px solid var(--highlight-color, rgb(255 255 255 / 90%));
-  color: #fff;
+  &:hover,
+  &:focus-visible {
+    background: var(--highlight-color, #{$color-highlight});
+    border-color: var(--highlight-color, #{$color-highlight});
+    opacity: 0.88;
+  }
 }
 
 .heroBanner__copyParagraph .heroBanner__copyLink + .heroBanner__copyLink {
-  margin-left: 20px;
-}
+  @include button-base;
+  margin-left: 0.75rem;
+  border-color: #fff;
+  background: transparent;
+  color: #fff;
 
-.heroBanner__copyLink:hover {
-  opacity: 0.9;
+  &:hover,
+  &:focus-visible {
+    background: rgb(255 255 255 / 50%);
+    border-color: #fff;
+    color: #fff;
+    opacity: 1;
+  }
 }
 
 .heroBanner__title--hidden {
   display: none;
 }
 
-@media (max-width: 767px) {
-  .heroBanner {
-    min-height: 100vh;
-    margin-top: -80px;
-  }
+.heroBanner--page-hero {
+  min-height: 18.75rem;
+  max-height: none;
+  padding: 6.5rem 0 3rem;
+  text-align: left;
 
-  .heroBanner__copy {
-    text-align: center;
-  }
-
-  .heroBanner__content {
-    padding-top: calc(2.5rem + 56px);
-  }
-
-  .heroBanner__copyParagraph .heroBanner__copyLink:first-child {
-    margin-bottom: 10px;
-  }
-
-  .heroBanner__copyParagraph .heroBanner__copyLink + .heroBanner__copyLink {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .heroBanner--page-hero {
-    margin-top: 0 !important;
-    max-height: 300px;
-    min-height: 300px !important;
-  }
-
-  .heroBanner--page-hero .heroBanner__content {
-    height: 300px;
-    min-height: 300px !important;
-    padding-top: 1.5rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .heroBanner {
-    min-height: 100vh;
-    margin-top: -114px;
-  }
-
-  .heroBanner__content {
-    padding: 4rem 0;
-    min-height: 100vh;
-  }
-
+  .heroBanner__content,
   .heroBanner__inner {
-    padding: 0 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100%;
+    min-height: 0;
+    justify-content: flex-start;
   }
 
   .heroBanner__title {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
+    font-size: clamp(2rem, 4vw, 3rem);
+
+    &::after {
+      margin-inline: 0;
+    }
   }
 
-  .heroBanner__copyHeading1 {
-    line-height: 3.125rem;
+  .heroBanner__copy {
+    margin-inline: 0;
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .heroBanner {
+    padding: 6.5rem 0 4rem;
   }
 
-  .heroBanner--page-hero {
-    margin-top: 0 !important;
-    max-height: 300px;
-    min-height: 300px !important;
-  }
-
-  .heroBanner--page-hero .heroBanner__content {
-    height: 300px;
-    min-height: 300px !important;
-    padding: 2rem 0;
+  .heroBanner__copyParagraph .heroBanner__copyLink + .heroBanner__copyLink {
+    margin-top: 0.75rem;
+    margin-left: 0.75rem;
   }
 }

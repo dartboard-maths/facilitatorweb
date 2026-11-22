@@ -1,8 +1,22 @@
 import type { Metadata } from "next";
-import "./globals.scss";
+import { Inter, Poppins } from "next/font/google";
 import PageTransition from "../components/PageTransition";
 import CmsFooterGate from "../components/cms/CmsFooterGate";
 import { getCmsFooterById, getCmsGlobalSettings } from "../lib/cms/contentful";
+import "./globals.scss";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-poppins",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Edu Placement",
@@ -19,7 +33,7 @@ export default async function RootLayout({
   const footer = globalSettings?.footer || (await getCmsFooterById(fallbackFooterId));
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body>
         <PageTransition>{children}</PageTransition>
         <CmsFooterGate footer={footer} />

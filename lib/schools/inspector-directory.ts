@@ -69,6 +69,10 @@ function signRequest(path: string, query: string): { timestamp: string; signatur
   return { timestamp, signature };
 }
 
+export function signedMoodleGet(path: string, params: Record<string, string>): Promise<Response | null> {
+  return moodleGet(path, params);
+}
+
 async function moodleGet(path: string, params: Record<string, string>): Promise<Response | null> {
   const origin = moodleOrigin();
   const query = canonicalQuery(params);
