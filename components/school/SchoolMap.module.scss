@@ -39,13 +39,42 @@
   }
 
   &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin: 0;
   }
 
   &__heading {
+    flex: 1;
+    min-width: 0;
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
+  }
+
+  &__theme {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-left: auto;
+    padding: 0;
+    border: 1px solid rgba(30, 27, 75, 0.16);
+    border-radius: 999px;
+    background: #fff;
+    color: #1e1b4b;
+
+    svg {
+      width: 0.95rem;
+      height: 0.95rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
   }
 
   &__panel,
@@ -161,6 +190,7 @@
 
   &__ring {
     --dbm-progress: 0;
+    --dbm-track: #e7e2f2;
     position: relative;
     display: grid;
     place-items: center;
@@ -176,7 +206,7 @@
       background: conic-gradient(
         from -90deg,
         var(--dbm-ring) calc(var(--dbm-progress) * 1%),
-        #e7e2f2 0
+        var(--dbm-track) 0
       );
       -webkit-mask: radial-gradient(farthest-side, transparent 64%, #000 65%);
       mask: radial-gradient(farthest-side, transparent 64%, #000 65%);
@@ -740,7 +770,7 @@
         background: linear-gradient(
           90deg,
           var(--dbm-ring) calc(var(--dbm-progress) * 1%),
-          #e7e2f2 0
+          var(--dbm-track) 0
         );
       }
     }
@@ -779,6 +809,195 @@
       grid-template-columns: 1fr;
     }
   }
+
+}
+
+.school-map--dark {
+  color: #e7e9f4;
+
+  .school-map__panel,
+  .school-map__school,
+  .school-map__grades-island,
+  .school-map__class {
+    border-color: rgba(34, 211, 238, 0.28);
+    background: rgba(8, 12, 24, 0.94);
+  }
+
+  .school-map__class,
+  .school-map__deck {
+    box-shadow: 0 0 28px rgba(34, 211, 238, 0.16);
+  }
+
+  .school-map__heading,
+  .school-map__title,
+  .school-map__grade-title,
+  .school-map__tile-value,
+  .school-map__ring-value,
+  .school-map__percent,
+  .school-map__class-head h3,
+  .school-map__deck-head h3,
+  .school-map__card h4,
+  .school-map__deck-label,
+  .school-map__streaks,
+  .school-map__gauge span,
+  .school-map__donut-wrap strong {
+    color: #f5f3ff;
+  }
+
+  .school-map__header :global(a) {
+    color: #e2e8f0;
+  }
+
+  .school-map__prompt,
+  .school-map__id,
+  .school-map__tile-label,
+  .school-map__dial-label,
+  .school-map__card-head span,
+  .school-map__learner small,
+  .school-map__spotlight small,
+  .school-map__counts li,
+  .school-map__legend,
+  .school-map__caption,
+  .school-map__heat th,
+  .school-map__heat td,
+  .school-map__donut-wrap p,
+  .school-map__pills small {
+    color: #9aa6c4;
+  }
+
+  .school-map__theme {
+    border-color: rgba(250, 204, 21, 0.7);
+    background: #101828;
+    color: #fde68a;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
+  }
+
+  .school-map__tile,
+  .school-map__grade,
+  .school-map__card,
+  .school-map__deck,
+  .school-map__pills li {
+    background: #12182b;
+    color: #e7e9f4;
+    box-shadow: none;
+  }
+
+  .school-map__grades-cta {
+    background: #22d3ee;
+    color: #041016;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.45);
+  }
+
+  .school-map__close {
+    border-color: rgba(192, 132, 252, 0.7);
+    background: transparent;
+    color: #f5d0fe;
+  }
+
+  .school-map__avatar {
+    background: #312e81;
+    color: #f5f3ff;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.7);
+  }
+
+  .school-map__deck-scrim {
+    background: rgba(2, 6, 23, 0.68);
+  }
+
+  .school-map__dial--learners { --dbm-ring: #818cf8; }
+  .school-map__dial--courses { --dbm-ring: #38bdf8; }
+  .school-map__dial--completion { --dbm-ring: #e879f9; }
+  .school-map__dial--grade { --dbm-ring: #22d3ee; }
+  .school-map__dial--competencies { --dbm-ring: #2dd4bf; }
+  .school-map__dial--badges { --dbm-ring: #fb923c; }
+
+  .school-map__ring,
+  .school-map__bar {
+    --dbm-track: #243044;
+  }
+
+  .school-map__bar {
+    overflow: visible;
+  }
+
+  .school-map__ring::before,
+  .school-map__ring::after {
+    filter: drop-shadow(0 0 4px var(--dbm-ring)) drop-shadow(0 0 10px var(--dbm-ring));
+  }
+
+  .school-map__bar span {
+    background: #f472b6;
+    box-shadow: 0 0 8px #f472b6;
+  }
+
+  .school-map__bar--purple span {
+    background: #c084fc;
+    box-shadow: 0 0 8px #c084fc;
+  }
+
+  .school-map__bar--cyan span {
+    background: #22d3ee;
+    box-shadow: 0 0 8px #22d3ee;
+  }
+
+  .school-map__bar--green span {
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+  }
+
+  .school-map__bar--amber span {
+    background: #fbbf24;
+    box-shadow: 0 0 8px #fbbf24;
+  }
+
+  .school-map__seg--complete {
+    stroke: #4ade80;
+    filter: drop-shadow(0 0 4px #4ade80);
+  }
+
+  .school-map__seg--in_progress {
+    stroke: #38bdf8;
+    filter: drop-shadow(0 0 4px #38bdf8);
+  }
+
+  .school-map__seg--not_started {
+    stroke: #334155;
+  }
+
+  .school-map__legend--complete > span {
+    background: #4ade80;
+    box-shadow: 0 0 6px #4ade80;
+  }
+
+  .school-map__legend--in_progress > span {
+    background: #38bdf8;
+    box-shadow: 0 0 6px #38bdf8;
+  }
+
+  .school-map__gauge-track {
+    stroke: #1e293b;
+  }
+
+  .school-map__gauge-fill {
+    stroke: #c084fc;
+    filter: drop-shadow(0 0 5px #c084fc);
+  }
+
+  .school-map__gauge--resilience .school-map__gauge-fill {
+    stroke: #2dd4bf;
+    filter: drop-shadow(0 0 5px #2dd4bf);
+  }
+
+  .school-map__cell {
+    background: #1e293b;
+    box-shadow: none;
+  }
+
+  .school-map__cell--1 { background: #1d4ed8; box-shadow: 0 0 5px #60a5fa; }
+  .school-map__cell--2 { background: #2563eb; box-shadow: 0 0 6px #60a5fa; }
+  .school-map__cell--3 { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
+  .school-map__cell--4 { background: #22d3ee; box-shadow: 0 0 7px #22d3ee; }
+  .school-map__cell--5 { background: #e879f9; box-shadow: 0 0 8px #e879f9; }
 }
 
 @keyframes school-map-drop {
