@@ -68,7 +68,7 @@ export function useCountUp(value: string, ready: boolean, delay = 0): string {
     }
 
     let frame = 0;
-    const duration = 800;
+    const duration = 1800;
     const started = performance.now() + delay;
     const tick = (now: number) => {
       const progress = Math.min(1, Math.max(0, (now - started) / duration));
