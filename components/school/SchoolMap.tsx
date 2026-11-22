@@ -11,6 +11,7 @@ import type {
   InspectorSchoolPin,
 } from "../../lib/schools/inspector-directory";
 import { ClassProfileIsland } from "./ClassProfileIsland";
+import { CountUp, useHudReady } from "./hud-motion";
 import { LearnerBattleDeck } from "./LearnerBattleDeck";
 import styles from "./SchoolMap.module.scss";
 
@@ -66,27 +67,33 @@ function dialProgress(key: FigureKey, value: string): number {
 function StatDials({
   values,
   loading = false,
+  motionKey = "stats",
 }: {
   values: Partial<Record<FigureKey, string>> | null;
   loading?: boolean;
+  motionKey?: string;
 }) {
+  const ready = useHudReady(Boolean(values) && !loading);
   const [counts, rings] = STAT_ROWS;
   return (
-    <div className={styles["school-map__dials"]}>
+    <div className={styles["school-map__dials"]} key={motionKey}>
       <div className={styles["school-map__tiles"]}>
-        {counts.map((stat) => {
+        {counts.map((stat, index) => {
           const value = loading && !values ? "…" : figure(values?.[stat.key]);
           return (
             <article className={styles["school-map__tile"]} key={stat.key}>
               <p className={styles["school-map__tile-label"]}>{stat.label}</p>
-              <p className={styles["school-map__tile-value"]}>{value}</p>
+              <p className={styles["school-map__tile-value"]}>
+                <CountUp value={value} ready={ready} delay={index * 70} />
+              </p>
             </article>
           );
         })}
       </div>
       <div className={styles["school-map__dial-row"]}>
-        {rings.map((stat) => {
+        {rings.map((stat, index) => {
           const value = loading && !values ? "…" : figure(values?.[stat.key]);
+          const progress = ready ? dialProgress(stat.key, value) : 0;
           return (
             <div
               className={`${styles["school-map__dial"]} ${styles[`school-map__dial--${stat.key}`]}`}
@@ -94,11 +101,11 @@ function StatDials({
             >
                 <span
                   className={styles["school-map__ring"]}
-                  style={{ "--dbm-progress": dialProgress(stat.key, value) } as CSSProperties}
+                  style={{ "--dbm-progress": progress, transitionDelay: `${120 + index * 80}ms` } as CSSProperties}
                   role="img"
                   aria-label={`${stat.label}: ${value}`}
                 >
-                  <span className={styles["school-map__ring-value"]}>{value}</span>
+                  <CountUp className={styles["school-map__ring-value"]} value={value} ready={ready} delay={120 + index * 80} />
                 </span>
                 <p className={styles["school-map__dial-label"]}>{stat.label}</p>
             </div>

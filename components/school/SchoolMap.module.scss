@@ -1,3 +1,9 @@
+@property --dbm-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 .school-map {
   position: relative;
   width: 100%;
@@ -29,7 +35,6 @@
     gap: 0.75rem;
     width: min(380px, calc(100% - 2rem));
     max-height: calc(100vh - 2rem);
-    overflow: auto;
     pointer-events: none;
   }
 
@@ -50,7 +55,6 @@
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 1.25rem;
     background: rgba(244, 242, 248, 0.96);
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
   }
 
   &__panel {
@@ -66,7 +70,9 @@
   }
 
   &__grades-island {
-    overflow: visible;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
     animation: school-map-drop 320ms ease;
   }
 
@@ -160,6 +166,7 @@
     place-items: center;
     width: 3.35rem;
     height: 3.35rem;
+    transition: --dbm-progress 800ms cubic-bezier(0.22, 1, 0.36, 1);
 
     &::before {
       content: "";
@@ -367,9 +374,11 @@
 
     span {
       display: block;
+      width: 0;
       height: 100%;
       border-radius: inherit;
       background: #ec4899;
+      transition: width 800ms cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     &--purple span { background: #7c3aed; }
@@ -471,6 +480,7 @@
     circle {
       fill: none;
       stroke-width: 6;
+      transition: stroke-dasharray 800ms cubic-bezier(0.22, 1, 0.36, 1);
     }
   }
 
@@ -582,6 +592,7 @@
     stroke: #7c3aed;
     stroke-width: 14;
     stroke-linecap: round;
+    transition: stroke-dasharray 800ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   &__gauge--resilience &__gauge-fill {
@@ -664,6 +675,15 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .school-map__ring,
+  .school-map__bar span,
+  .school-map__donut circle,
+  .school-map__gauge-fill {
+    transition: none;
   }
 }
 

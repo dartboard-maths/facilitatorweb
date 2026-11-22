@@ -1,6 +1,7 @@
 "use client";
 
 import type { InspectorGradeProfile, InspectorLearnerRow } from "../../lib/schools/inspector-directory";
+import { CountUp, useHudReady } from "./hud-motion";
 import styles from "./SchoolMap.module.scss";
 
 function HeatTable({
@@ -55,6 +56,7 @@ export function ClassProfileIsland({
   onClose: () => void;
   onSelectLearner: (learnerKey: string) => void;
 }) {
+  const ready = useHudReady(Boolean(profile) && !loading);
   return (
     <aside className={styles["school-map__class"]} aria-label={profile?.label ?? "Class profile"}>
       <div className={styles["school-map__class-head"]}>
@@ -77,8 +79,14 @@ export function ClassProfileIsland({
                 <p className={styles["school-map__prompt"]}>Nothing to show yet.</p>
               ) : (
                 <ol className={styles["school-map__progress"]}>
-                  {profile.progress.map((learner) => (
-                    <LearnerProgress key={learner.learnerKey} learner={learner} onSelect={onSelectLearner} />
+                  {profile.progress.map((learner, index) => (
+                    <LearnerProgress
+                      key={learner.learnerKey}
+                      learner={learner}
+                      index={index}
+                      ready={ready}
+                      onSelect={onSelectLearner}
+                    />
                   ))}
                 </ol>
               )}
@@ -98,15 +106,15 @@ export function ClassProfileIsland({
               {profile.hasAssignments ? (
                 <ul className={styles["school-map__counts"]}>
                   <li>
-                    <strong>{profile.assignmentsCompleted}</strong>
+                    <strong><CountUp value={profile.assignmentsCompleted} ready={ready} delay={80} /></strong>
                     <span>{profile.assignmentsCompletedLabel}</span>
                   </li>
                   <li>
-                    <strong>{profile.assignmentsOverdue}</strong>
+                    <strong><CountUp value={profile.assignmentsOverdue} ready={ready} delay={140} /></strong>
                     <span>{profile.assignmentsOverdueLabel}</span>
                   </li>
                   <li>
-                    <strong>{profile.assignmentsTotal}</strong>
+                    <strong><CountUp value={profile.assignmentsTotal} ready={ready} delay={200} /></strong>
                     <span>{profile.assignmentsTotalLabel}</span>
                   </li>
                 </ul>
@@ -120,7 +128,7 @@ export function ClassProfileIsland({
                 <div className={styles["school-map__challenge"]}>
                   <div className={styles["school-map__donut-wrap"]}>
                     <svg className={styles["school-map__donut"]} viewBox="0 0 42 42" aria-hidden="true">
-                      {profile.segments.map((segment) => (
+                      {profile.segments.map((segment, index) => (
                         <circle
                           key={segment.state}
                           className={styles[`school-map__seg--${segment.state}`] ?? ""}
@@ -128,21 +136,22 @@ export function ClassProfileIsland({
                           cy="21"
                           r="15.5"
                           pathLength="100"
-                          strokeDasharray={`${segment.dash} ${segment.gap}`}
+                          strokeDasharray={ready ? `${segment.dash} ${segment.gap}` : `0 ${segment.dash + segment.gap}`}
                           strokeDashoffset={segment.offset}
+                          style={{ transitionDelay: `${180 + index * 90}ms` }}
                         />
                       ))}
                     </svg>
                     <p>
-                      <strong>{profile.completionRate}%</strong>
+                      <strong><CountUp value={profile.completionRate ? `${profile.completionRate}%` : "0%"} ready={ready} delay={180} /></strong>
                       <span>{profile.completionLabel}</span>
                     </p>
                   </div>
                   <ul className={styles["school-map__legend"]}>
-                    {profile.segments.map((segment) => (
+                    {profile.segments.map((segment, index) => (
                       <li key={segment.state} className={styles[`school-map__legend--${segment.state}`] ?? ""}>
                         <span />
-                        {segment.label} <strong>{segment.count}</strong>
+                        {segment.label} <strong><CountUp value={segment.count} ready={ready} delay={180 + index * 90} /></strong>
                       </li>
                     ))}
                   </ul>
@@ -181,13 +190,17 @@ export function ClassProfileIsland({
 
 function LearnerProgress({
   learner,
+  index,
+  ready,
   onSelect,
 }: {
   learner: InspectorLearnerRow;
+  index: number;
+  ready: boolean;
   onSelect: (learnerKey: string) => void;
 }) {
   return (
-    <li>
+    <li style={{ animationDelay: `${index * 60}ms` }}>
       <button type="button" className={styles["school-map__learner"]} onClick={() => onSelect(learner.learnerKey)}>
         <span className={styles["school-map__avatar"]} aria-hidden="true">
           {learner.initials}
@@ -198,10 +211,10 @@ function LearnerProgress({
         </span>
       </button>
       <span className={`${styles["school-map__bar"]} ${styles[`school-map__bar--${learner.tone}`] ?? ""}`} aria-hidden="true">
-        <span style={{ width: `${learner.barWidth}%` }} />
+        <span style={{ width: ready ? `${learner.barWidth}%` : "0%", transitionDelay: `${index * 70}ms` }} />
       </span>
       <span className={styles["school-map__percent"]}>
-        {learner.hasAccuracy ? `${learner.accuracy}%` : "—"}
+        {learner.hasAccuracy ? <CountUp value={`${learner.accuracy}%`} ready={ready} delay={index * 70} /> : "—"}
       </span>
     </li>
   );
