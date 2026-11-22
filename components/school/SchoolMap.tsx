@@ -30,6 +30,35 @@ export type SchoolQuery = {
 
 const FALLBACK_CENTER = { latitude: -33.9249, longitude: 18.4241 };
 const UNKNOWN = "—";
+const THEME_KEY = "dbm-inspector-theme";
+const LIGHT_MAP = "mapbox://styles/mapbox/streets-v12";
+const DARK_MAP = "mapbox://styles/mapbox/dark-v11";
+
+type InspectorTheme = "light" | "dark";
+
+function storedTheme(): InspectorTheme {
+  const stored = window.localStorage.getItem(THEME_KEY);
+  if (stored === "dark" || stored === "light") {
+    return stored;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function ThemeIcon({ theme }: { theme: InspectorTheme }) {
+  if (theme === "dark") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2.5v2.2M12 19.3v2.2M4.8 4.8l1.6 1.6M17.6 17.6l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.8 19.2l1.6-1.6M17.6 6.4l1.6-1.6" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20.5 14.8A8.2 8.2 0 1 1 9.2 3.5a6.6 6.6 0 0 0 11.3 11.3z" />
+    </svg>
+  );
+}
 
 type FigureKey = "learners" | "courses" | "completion" | "grade" | "competencies" | "badges";
 
@@ -218,6 +247,10 @@ export function SchoolMap({
   const [gradeLoading, setGradeLoading] = useState(false);
   const [gradeFailed, setGradeFailed] = useState(false);
   const [selectedLearnerKey, setSelectedLearnerKey] = useState<string | null>(null);
+  const [theme, setTheme] = useState<InspectorTheme>("light");
+  const themeRef = useRef(theme);
+  const mapStyleRef = useRef(LIGHT_MAP);
+  themeRef.current = theme;
   const selected = pins.find((pin) => pin.id === selectedId) ?? null;
 
   selectRef.current = (id: string) => {
@@ -230,9 +263,11 @@ export function SchoolMap({
 
     mapboxgl.accessToken = mapboxToken;
     const focus = linkedPin ?? pins[0] ?? FALLBACK_CENTER;
+    const initialStyle = themeRef.current === "dark" ? DARK_MAP : LIGHT_MAP;
+    mapStyleRef.current = initialStyle;
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+      style: initialStyle,
       center: [focus.longitude, focus.latitude],
       zoom: pins.length === 1 ? 14 : 4,
     });
@@ -265,13 +300,32 @@ export function SchoolMap({
   }, [linkedPin, mapboxToken, pins]);
 
   useEffect(() => {
+    setTheme(storedTheme());
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+    const next = theme === "dark" ? DARK_MAP : LIGHT_MAP;
+    if (mapStyleRef.current === next) {
+      return;
+    }
+    mapStyleRef.current = next;
+    map.setStyle(next);
+  }, [theme]);
+
+  useEffect(() => {
+    const idle = theme === "dark" ? "#22d3ee" : "#1a2c4e";
+    const active = theme === "dark" ? "#fb7185" : "#9a3412";
     markersRef.current.forEach((marker, id) => {
       const path = marker.getElement().querySelector("path");
       if (path) {
-        path.setAttribute("fill", id === selectedId ? "#9a3412" : "#1a2c4e");
+        path.setAttribute("fill", id === selectedId ? active : idle);
       }
     });
-  }, [selectedId, pins]);
+  }, [selectedId, pins, theme]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -372,7 +426,10 @@ export function SchoolMap({
   const openLearner = gradeProfile?.progress.find((row) => row.learnerKey === selectedLearnerKey) ?? null;
 
   return (
-    <section className={styles["school-map"]} aria-label="Region Inspector">
+    <section
+      className={`${styles["school-map"]} ${theme === "dark" ? styles["school-map--dark"] : ""}`}
+      aria-label="Region Inspector"
+    >
       <div ref={mapContainerRef} className={styles["school-map__canvas"]} />
       <button
         type="button"
@@ -390,11 +447,26 @@ export function SchoolMap({
       </button>
       <div className={styles["school-map__stack"]}>
         <aside className={styles["school-map__panel"]}>
-          <div className={`${styles["school-map__header"]} d-flex align-items-center gap-2`}>
+          <div className={styles["school-map__header"]}>
             <Link href="/" className="btn btn-link p-0 text-decoration-none" aria-label="Back to homepage">
               ←
             </Link>
             <h2 className={styles["school-map__heading"]}>Region Inspector</h2>
+            <button
+              type="button"
+              className={styles["school-map__theme"]}
+              aria-pressed={theme === "dark"}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={() => {
+                setTheme((current) => {
+                  const next = current === "dark" ? "light" : "dark";
+                  window.localStorage.setItem(THEME_KEY, next);
+                  return next;
+                });
+              }}
+            >
+              <ThemeIcon theme={theme} />
+            </button>
           </div>
           {selected ? null : <p className={styles["school-map__prompt"]}>{prompt}</p>}
           {!mapboxToken ? (
