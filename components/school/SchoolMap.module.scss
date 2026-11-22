@@ -166,7 +166,7 @@
     place-items: center;
     width: 3.35rem;
     height: 3.35rem;
-    transition: --dbm-progress 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: --dbm-progress 1800ms cubic-bezier(0.22, 1, 0.36, 1);
 
     &::before {
       content: "";
@@ -382,7 +382,7 @@
       height: 100%;
       border-radius: inherit;
       background: #ec4899;
-      transition: width 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+      transition: width 1800ms cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     &--purple span { background: #7c3aed; }
@@ -484,7 +484,7 @@
     circle {
       fill: none;
       stroke-width: 6;
-      transition: stroke-dasharray 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+      transition: stroke-dasharray 1800ms cubic-bezier(0.22, 1, 0.36, 1);
     }
   }
 
@@ -596,7 +596,7 @@
     stroke: #7c3aed;
     stroke-width: 14;
     stroke-linecap: round;
-    transition: stroke-dasharray 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: stroke-dasharray 1800ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   &__gauge--resilience &__gauge-fill {
