@@ -56,7 +56,7 @@ export function ClassProfileIsland({
   onClose: () => void;
   onSelectLearner: (learnerKey: string) => void;
 }) {
-  const ready = useHudReady(Boolean(profile) && !loading, 320);
+  const ready = useHudReady(Boolean(profile) && !loading, 280);
   return (
     <aside className={styles["school-map__class"]} aria-label={profile?.label ?? "Class profile"}>
       <div className={styles["school-map__class-head"]}>
