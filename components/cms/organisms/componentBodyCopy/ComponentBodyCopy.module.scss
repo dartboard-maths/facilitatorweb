@@ -1,11 +1,8 @@
-.bodyCopy {
-  padding: 3rem 1rem;
-}
+@use "../../dbm-theme" as *;
 
-@media (min-width: 768px) {
-  .bodyCopy {
-    padding: 4rem 1rem;
-  }
+.bodyCopy {
+  @include section-padding;
+  color: $color-text;
 }
 
 .bodyCopy__container {
@@ -13,89 +10,40 @@
 }
 
 .bodyCopy__title {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  margin-top: 0;
-  color: #1f2937;
-}
-
-@media (min-width: 768px) {
-  .bodyCopy__title {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-    margin-bottom: 2rem;
-  }
+  @include section-title;
 }
 
 .bodyCopy__copy {
-  color: #374151;
+  @include rich-copy;
 }
 
 .bodyCopy__copyParagraph {
-  font-size: 1rem;
-  line-height: 1.75rem;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem;
 }
 
 .bodyCopy__copyParagraph:last-child {
   margin-bottom: 0;
 }
 
-.bodyCopy__copyHeading1 {
-  font-size: 2rem;
-  line-height: 2.25rem;
-  font-weight: 700;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  color: #1f2937;
-}
-
-.bodyCopy__copyHeading2 {
-  font-size: 1.75rem;
-  line-height: 2rem;
-  font-weight: 700;
-  margin-top: 1.75rem;
-  margin-bottom: 0.875rem;
-  color: #1f2937;
-}
-
-.bodyCopy__copyHeading3 {
-  font-size: 1.5rem;
-  line-height: 1.75rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  color: #1f2937;
-}
-
-.bodyCopy__copyHeading4 {
-  font-size: 1.25rem;
-  line-height: 1.5rem;
-  font-weight: 600;
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
-  color: #1f2937;
-}
-
-.bodyCopy__copyHeading5 {
-  font-size: 1.125rem;
-  line-height: 1.375rem;
-  font-weight: 600;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  color: #1f2937;
-}
-
+.bodyCopy__copyHeading1,
+.bodyCopy__copyHeading2,
+.bodyCopy__copyHeading3,
+.bodyCopy__copyHeading4,
+.bodyCopy__copyHeading5,
 .bodyCopy__copyHeading6 {
-  font-size: 1rem;
-  line-height: 1.25rem;
-  font-weight: 600;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  color: #1f2937;
+  margin: 1.5rem 0 0.75rem;
+  color: $color-text;
+  font-family: $font-family-heading;
+  font-weight: 700;
+  line-height: 1.25;
 }
+
+.bodyCopy__copyHeading1 { font-size: clamp(1.85rem, 3vw, 2.25rem); }
+.bodyCopy__copyHeading2 { font-size: clamp(1.5rem, 2.4vw, 1.85rem); }
+.bodyCopy__copyHeading3 { font-size: 1.35rem; }
+.bodyCopy__copyHeading4 { font-size: 1.15rem; }
+.bodyCopy__copyHeading5 { font-size: 1.05rem; }
+.bodyCopy__copyHeading6 { font-size: 1rem; }
 
 .bodyCopy__copyList,
 .bodyCopy__copyOrderedList {
@@ -112,38 +60,30 @@
 }
 
 .bodyCopy__copyListItem {
-  font-size: 1rem;
-  line-height: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
 .bodyCopy__copyQuote {
-  border-left: 4px solid #e5e7eb;
-  padding-left: 1rem;
   margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid $color-highlight;
+  color: $color-text;
   font-style: italic;
-  color: #6b7280;
 }
 
 .bodyCopy__copyHr {
-  border: none;
-  border-top: 1px solid #e5e7eb;
   margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid $color-border;
 }
 
 .bodyCopy__copyLink {
-  color: #3b82f6;
-  text-decoration: underline;
-  transition: color 0.2s ease;
-}
-
-.bodyCopy__copyLink:hover {
-  color: #1d4ed8;
+  @include text-link;
 }
 
 .bodyCopy__copyBold {
+  color: $color-text;
   font-weight: 700;
-  color: #1f2937;
 }
 
 .bodyCopy__copyItalic {
@@ -152,21 +92,45 @@
 
 .bodyCopy__copyUnderline {
   text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .bodyCopy__copyCode {
-  background-color: #f3f4f6;
-  color: #1f2937;
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
-  font-family: ui-monospace, sfmono-regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  background: $color-bg-alt;
+  color: $color-text;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.875rem;
 }
 
 .bodyCopy--light {
-  background: #f8fafc;
+  background: $color-bg-alt;
 }
 
 .bodyCopy--dark {
-  background: #0f172a;
+  background: $color-primary-dark;
+  color: #fff;
+
+  .bodyCopy__title,
+  .bodyCopy__copy,
+  .bodyCopy__copyHeading1,
+  .bodyCopy__copyHeading2,
+  .bodyCopy__copyHeading3,
+  .bodyCopy__copyHeading4,
+  .bodyCopy__copyHeading5,
+  .bodyCopy__copyHeading6,
+  .bodyCopy__copyBold,
+  .bodyCopy__copyQuote {
+    color: inherit;
+  }
+
+  .bodyCopy__copyLink {
+    color: #fff;
+
+    &:hover,
+    &:focus-visible {
+      color: $color-highlight;
+    }
+  }
 }

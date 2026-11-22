@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CmsHeader, CmsLink, CmsMenuItem, CmsRenderContext } from "../../lib/cms/contentful";
 import styles from "./CmsSiteChrome.module.scss";
 
@@ -58,7 +58,7 @@ function HeaderMenuItem({ item, renderContext }: { item: CmsMenuItem; renderCont
   return (
     <div className={`dropdown ${styles.siteHeader__dropdown}`}>
       <button
-        className={`btn btn-link dropdown-toggle p-0 ${styles.siteHeader__dropdownToggle}`}
+        className={`dropdown-toggle ${styles.siteHeader__dropdownToggle}`}
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"
@@ -86,9 +86,30 @@ type CmsSiteHeaderClientProps = {
 };
 
 export default function CmsSiteHeaderClient({ header, renderContext }: CmsSiteHeaderClientProps) {
+  const headerRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) {
+      return;
+    }
+
+    const publishOffset = () => {
+      document.documentElement.style.setProperty("--dbm-header-offset", `${node.offsetHeight}px`);
+    };
+
+    publishOffset();
+    const observer = new ResizeObserver(publishOffset);
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--dbm-header-offset");
+    };
+  }, [header]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -126,8 +147,9 @@ export default function CmsSiteHeaderClient({ header, renderContext }: CmsSiteHe
     .join(" ");
 
   return (
-    <header className={headerClassName}>
-      <div className={`container ${styles.siteHeader__container}`}>
+    <header ref={headerRef} className={headerClassName}>
+      <div className={styles.siteHeader__bar}>
+      <div className={styles.siteHeader__container}>
         <Link href="/" className={styles.siteHeader__logoLink}>
           {header.logo?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -145,6 +167,7 @@ export default function CmsSiteHeaderClient({ header, renderContext }: CmsSiteHe
             <HeaderMenuItem key={item.id} item={item} renderContext={renderContext} />
           ))}
         </nav>
+      </div>
       </div>
     </header>
   );

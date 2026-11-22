@@ -1,14 +1,18 @@
+@use "../../dbm-theme" as *;
+
 .twoColumn {
+  @include section-padding;
   position: relative;
-  padding: 3rem 1rem;
+  color: $color-text;
 }
 
 .twoColumn__imageWrapper {
   position: relative;
   width: 100%;
-  min-height: 300px;
-  border-radius: 0.5rem;
+  min-height: 22rem;
   overflow: hidden;
+  border-radius: 1.25rem;
+  background: $color-primary-dark;
 }
 
 .twoColumn__image {
@@ -29,21 +33,23 @@
 }
 
 .twoColumn__title {
-  margin-bottom: 1rem;
-  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
-  font-weight: 700;
-  line-height: 1.15;
+  @include section-title;
+  font-size: clamp(1.5rem, 3vw, 2rem);
 }
 
 .twoColumn__introCopy {
   margin-bottom: 1rem;
+  color: $color-text-muted;
   font-size: 1.125rem;
-  line-height: 1.65;
+  line-height: 1.7;
+}
+
+.twoColumn__copy {
+  @include rich-copy;
 }
 
 .twoColumn__copyParagraph {
   margin: 0 0 1rem;
-  line-height: 1.75;
 }
 
 .twoColumn__copyParagraph:last-child {
@@ -57,6 +63,9 @@
 .twoColumn__copyHeading5,
 .twoColumn__copyHeading6 {
   margin: 1.25rem 0 0.75rem;
+  color: $color-text;
+  font-family: $font-family-heading;
+  font-weight: 700;
 }
 
 .twoColumn__copyList,
@@ -70,30 +79,33 @@
 }
 
 .twoColumn__copyQuote {
-  border-left: 4px solid currentcolor;
   margin: 1rem 0;
-  opacity: 0.8;
   padding-left: 1rem;
+  border-left: 4px solid $color-highlight;
 }
 
 .twoColumn__copyHr {
   margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid $color-border;
 }
 
 .twoColumn__copyLink {
-  text-decoration: underline;
+  @include text-link;
 }
 
 .twoColumn__copyBold {
+  color: $color-text;
   font-weight: 700;
 }
 
 .twoColumn__copyCode {
-  border-radius: 0.25rem;
   display: inline-block;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 0.875rem;
   padding: 0.05rem 0.35rem;
+  border-radius: 0.25rem;
+  background: $color-bg-alt;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
 }
 
 .twoColumn__ctaWrapper {
@@ -101,22 +113,56 @@
 }
 
 .twoColumn__cta {
-  border: 1px solid currentcolor;
-  display: inline-flex;
-  font-weight: 600;
-  padding: 0.65rem 1.25rem;
-  text-decoration: none;
-}
-
-.twoColumn__cta:hover,
-.twoColumn__cta:focus-visible {
-  opacity: 0.9;
-}
-
-.twoColumn--dark {
-  color: #fff;
+  @include button-primary;
 }
 
 .twoColumn--light {
-  color: #111827;
+  background: $color-bg-alt;
+  color: $color-text;
+}
+
+.twoColumn--dark {
+  background: $color-primary-dark;
+  color: #fff;
+
+  .twoColumn__title,
+  .twoColumn__introCopy,
+  .twoColumn__copy,
+  .twoColumn__copyBold,
+  .twoColumn__copyHeading1,
+  .twoColumn__copyHeading2,
+  .twoColumn__copyHeading3,
+  .twoColumn__copyHeading4,
+  .twoColumn__copyHeading5,
+  .twoColumn__copyHeading6 {
+    color: inherit;
+  }
+
+  .twoColumn__copyLink {
+    color: #fff;
+
+    &:hover,
+    &:focus-visible {
+      color: $color-highlight;
+    }
+  }
+
+  .twoColumn__cta {
+    border-color: #fff;
+    background: #fff;
+    color: $color-primary;
+
+    &:hover,
+    &:focus-visible {
+      border-color: $color-bg-alt;
+      background: $color-bg-alt;
+      color: $color-primary-dark;
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .twoColumn {
+    padding-inline: 0;
+  }
 }

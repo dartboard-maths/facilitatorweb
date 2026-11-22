@@ -1,84 +1,83 @@
+@use "../../dbm-theme" as *;
+
 .cardGrid {
+  @include section-padding;
   width: 100%;
-  padding: 2rem 0;
+  background: $color-bg-alt;
+  color: $color-text;
 }
 
 .cardGrid__title {
-  margin: 0 auto 1rem;
-  font-size: 2rem;
-  font-weight: 700;
+  @include section-title;
+  margin-inline: auto;
+  max-width: 40rem;
   text-align: center;
-  max-width: 800px;
+
+  &::after {
+    margin-inline: auto;
+  }
 }
 
 .cardGrid__intro {
-  margin: 0 auto 1.5rem;
-  font-size: 1rem;
-  line-height: 1.6;
+  max-width: 36rem;
+  margin: -0.35rem auto 2.5rem;
+  color: $color-text-muted;
+  font-size: 1.05rem;
+  line-height: 1.7;
   text-align: center;
-  max-width: 800px;
 }
 
 .cardGrid__grid {
-  margin-top: 0.25rem;
+  margin-top: 0;
 }
 
 .cardGrid__card {
-  background: #fff;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 18px rgb(15 23 42 / 10%);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border-radius: 1.5rem;
+  background: $color-bg;
+  box-shadow: 0 10px 28px rgba(26, 44, 78, 0.08);
+  text-align: center;
 }
 
-.cardGrid__card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgb(15 23 42 / 12%);
-}
-
-.card__imageWrapper {
-  position: relative;
+.card__imageWrapper,
+.card__image {
   width: 100%;
 }
 
 .card__image img {
+  display: block;
   width: 100%;
-  height: 240px;
+  height: 16rem;
   object-fit: cover;
 }
 
 .cardGrid__cardBody {
-  padding: 1.1rem 1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   height: 100%;
+  padding: 1.75rem 1.5rem 1.6rem;
 }
 
 .cardGrid__cardTitle {
   margin: 0;
-  font-size: 1.2rem;
+  color: $color-text;
+  font-family: $font-family-heading;
+  font-size: 1.125rem;
   font-weight: 700;
-  color: #1f2937;
+  line-height: 1.3;
 }
 
-.cardGrid__cardSubHeading {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
-.cardGrid__cardDescription {
-  margin: 0;
-  color: #4b5563;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
+.cardGrid__cardSubHeading,
+.cardGrid__cardDescription,
 .cardGrid__cardCopy {
-  color: #374151;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  margin: 0;
+  color: $color-text-muted;
+  font-size: 0.9375rem;
+  line-height: 1.65;
 }
 
 .cardGrid__copyParagraph {
@@ -89,10 +88,18 @@
   margin-bottom: 0;
 }
 
+.cardGrid__copyHeading3 {
+  margin: 0.5rem 0;
+  color: $color-text;
+  font-family: $font-family-heading;
+  font-size: 1rem;
+}
+
 .cardGrid__copyList,
 .cardGrid__copyOrderedList {
   margin: 0.6rem 0;
   padding-left: 1.25rem;
+  text-align: left;
 }
 
 .cardGrid__copyListItem {
@@ -100,8 +107,7 @@
 }
 
 .cardGrid__copyLink {
-  color: #1d4ed8;
-  text-decoration: underline;
+  @include text-link;
 }
 
 .cardGrid__copyBold {
@@ -111,25 +117,12 @@
 .cardGrid__ctaRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.75rem;
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding-top: 0.35rem;
 }
 
 .cardGrid__ctaLink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 120px;
-  padding: 0.65rem 1rem;
-  border: 1px solid #0f2745;
-  color: #0f2745;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.cardGrid__ctaLink:hover {
-  background: #0f2745;
-  color: #fff;
+  @include button-primary;
 }
