@@ -1,6 +1,7 @@
 "use client";
 
 import type { InspectorLearnerDetail } from "../../lib/schools/inspector-directory";
+import { CountUp, useHudReady } from "./hud-motion";
 import styles from "./SchoolMap.module.scss";
 
 function Gauge({
@@ -9,12 +10,16 @@ function Gauge({
   arc,
   caption,
   tone,
+  ready,
+  delay,
 }: {
   title: string;
   value: string;
   arc: number;
   caption?: string;
   tone: "confidence" | "resilience";
+  ready: boolean;
+  delay: number;
 }) {
   return (
     <section className={styles["school-map__card"]} aria-label={title}>
@@ -25,11 +30,12 @@ function Gauge({
           <path
             className={styles["school-map__gauge-fill"]}
             pathLength="100"
-            strokeDasharray={`${arc} 100`}
+            strokeDasharray={`${ready ? arc : 0} 100`}
+            style={{ transitionDelay: `${delay}ms` }}
             d="M14 88a74 74 0 0 1 148 0"
           />
         </svg>
-        <span>{value}</span>
+        <CountUp value={value} ready={ready} delay={delay} />
       </div>
       {caption ? <p className={styles["school-map__caption"]}>{caption}</p> : null}
     </section>
@@ -45,6 +51,7 @@ export function LearnerBattleDeck({
   detail: InspectorLearnerDetail;
   onClose: () => void;
 }) {
+  const ready = useHudReady(detail.linked);
   return (
     <div className={styles["school-map__deck-scrim"]} role="presentation" onClick={onClose}>
       <section
@@ -108,6 +115,8 @@ export function LearnerBattleDeck({
                   arc={detail.confidenceArc}
                   caption={detail.confidenceCaption}
                   tone="confidence"
+                  ready={ready}
+                  delay={80}
                 />
               ) : (
                 <section className={styles["school-map__card"]}>
@@ -119,9 +128,9 @@ export function LearnerBattleDeck({
             <section>
               <h4 className={styles["school-map__deck-label"]}>{detail.streakTitle}</h4>
               <p className={styles["school-map__streaks"]}>
-                <strong>{detail.activeStreak}</strong> {detail.activeLabel}
+                <strong><CountUp value={detail.activeStreak} ready={ready} delay={160} /></strong> {detail.activeLabel}
                 {" · "}
-                <strong>{detail.bestStreak}</strong> {detail.bestLabel}
+                <strong><CountUp value={detail.bestStreak} ready={ready} delay={220} /></strong> {detail.bestLabel}
               </p>
             </section>
             <section>
@@ -146,6 +155,8 @@ export function LearnerBattleDeck({
                   value={detail.resilience}
                   arc={detail.resilienceArc}
                   tone="resilience"
+                  ready={ready}
+                  delay={260}
                 />
               ) : (
                 <section className={styles["school-map__card"]}>
@@ -157,7 +168,7 @@ export function LearnerBattleDeck({
                 <h4>{detail.strategyTitle}</h4>
                 {detail.hasStrategy ? (
                   <p>
-                    <strong>{detail.strategy}%</strong> {detail.strategyCaption}
+                    <strong><CountUp value={`${detail.strategy}%`} ready={ready} delay={320} /></strong> {detail.strategyCaption}
                   </p>
                 ) : (
                   <p className={styles["school-map__prompt"]}>{detail.strategyEmpty}</p>
