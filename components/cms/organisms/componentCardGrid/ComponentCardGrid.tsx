@@ -10,6 +10,7 @@ import {
 } from "./CardGridCarousel";
 import { HoverCardList, type HoverCardData } from "./HoverCardList";
 import { HoverFlipGrid } from "./HoverFlipGrid";
+import { HoverGallery } from "./HoverGallery";
 import { MediaAccordion } from "./MediaAccordion";
 import styles from "./ComponentCardGrid.module.scss";
 
@@ -67,10 +68,10 @@ function blockTokens(theme?: CmsBlockTheme): string[] {
 }
 
 function cardGridLayout(theme?: CmsBlockTheme): {
-  layout: "grid" | "carousel" | "hover" | "media" | "hoverCard";
+  layout: "grid" | "carousel" | "hover" | "media" | "hoverCard" | "gallery";
   range: CardGridCarouselRange;
 } {
-  let layout: "grid" | "carousel" | "hover" | "media" | "hoverCard" = "grid";
+  let layout: "grid" | "carousel" | "hover" | "media" | "hoverCard" | "gallery" = "grid";
   let range: CardGridCarouselRange = "all";
   let explicitRange = false;
   for (const token of blockTokens(theme)) {
@@ -86,8 +87,11 @@ function cardGridLayout(theme?: CmsBlockTheme): {
     if (token === "hover-card-block") {
       layout = "hoverCard";
     }
+    if (token === "hover-gallery-block") {
+      layout = "gallery";
+    }
     const nextRange = CAROUSEL_RANGES[token];
-    if (nextRange && layout !== "hover" && layout !== "media") {
+    if (nextRange && layout !== "hover" && layout !== "media" && layout !== "gallery") {
       if (layout !== "hoverCard") {
         layout = "carousel";
       }
@@ -244,6 +248,7 @@ export default function ComponentCardGrid({ data, renderContext }: ComponentCard
     layout === "hover" ? styles["cardGrid--hover"] : "",
     layout === "media" ? styles["cardGrid--media"] : "",
     layout === "hoverCard" ? styles["cardGrid--hoverCard"] : "",
+    layout === "gallery" ? styles["cardGrid--gallery"] : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -338,7 +343,34 @@ export default function ComponentCardGrid({ data, renderContext }: ComponentCard
             ))}
           </HoverFlipGrid>
         ) : null}
-        {layout === "carousel" || layout === "hover" || layout === "media" || layout === "hoverCard" ? null : (
+        {layout === "gallery" ? (
+          <HoverGallery
+            panels={data.cards.map((card) => ({
+              id: card.id,
+              title: card.title,
+              imageUrl: card.image?.url,
+            }))}
+          >
+            {data.cards.map((card) => (
+              <div key={card.id}>
+                {card.description ? <p className={styles.galleryText}>{card.description}</p> : null}
+                {renderRichText(card.copy, {
+                  classNames: {
+                    paragraph: styles.galleryText,
+                    heading3: styles.galleryText,
+                    unorderedList: styles.cardGrid__copyList,
+                    orderedList: styles.cardGrid__copyOrderedList,
+                    listItem: styles.cardGrid__copyListItem,
+                    link: styles.cardGrid__copyLink,
+                    bold: styles.cardGrid__copyBold,
+                  },
+                  contextualLinks: renderContext?.contextualLinks,
+                })}
+              </div>
+            ))}
+          </HoverGallery>
+        ) : null}
+        {layout === "carousel" || layout === "hover" || layout === "media" || layout === "hoverCard" || layout === "gallery" ? null : (
           <div className={`${styles.cardGrid__grid} row g-4`}>
             {data.cards.map((card) => (
               <div className={cardColClass} key={card.id}>
