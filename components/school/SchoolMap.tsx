@@ -98,12 +98,10 @@ function StatDials({
   values,
   loading = false,
   motionKey = "stats",
-  tilesOnly = false,
 }: {
   values: Partial<Record<FigureKey, string>> | null;
   loading?: boolean;
   motionKey?: string;
-  tilesOnly?: boolean;
 }) {
   const ready = useHudReady(Boolean(values) && !loading);
   const [counts, rings] = STAT_ROWS;
@@ -122,7 +120,6 @@ function StatDials({
           );
         })}
       </div>
-      {tilesOnly ? null : (
       <div className={styles["school-map__dial-row"]}>
         {rings.map((stat, index) => {
           const value = loading && !values ? "…" : figure(values?.[stat.key]);
@@ -145,7 +142,6 @@ function StatDials({
           );
         })}
       </div>
-      )}
     </div>
   );
 }
@@ -526,7 +522,7 @@ export function SchoolMap({
           <aside className={styles["school-map__school"]} aria-label={selected.name}>
             <p className={styles["school-map__title"]}>{selected.name}</p>
             {isPublic ? null : <p className={styles["school-map__id"]}>{selected.id}</p>}
-            <StatDials values={figures} loading={loading && !figures} tilesOnly={isPublic} />
+            {isPublic ? null : <StatDials values={figures} loading={loading && !figures} />}
             {isPublic ? (
               <Link className={styles["school-map__grades-cta"]} href={signInHref}>
                 Sign in
