@@ -9,6 +9,7 @@ import {
   type CardGridVisibleCount,
 } from "./CardGridCarousel";
 import { HoverCardList, type HoverCardData } from "./HoverCardList";
+import { HoverFlipGrid } from "./HoverFlipGrid";
 import { MediaAccordion } from "./MediaAccordion";
 import styles from "./ComponentCardGrid.module.scss";
 
@@ -66,11 +67,12 @@ function blockTokens(theme?: CmsBlockTheme): string[] {
 }
 
 function cardGridLayout(theme?: CmsBlockTheme): {
-  layout: "grid" | "carousel" | "hover" | "media";
+  layout: "grid" | "carousel" | "hover" | "media" | "hoverCard";
   range: CardGridCarouselRange;
 } {
-  let layout: "grid" | "carousel" | "hover" | "media" = "grid";
+  let layout: "grid" | "carousel" | "hover" | "media" | "hoverCard" = "grid";
   let range: CardGridCarouselRange = "all";
+  let explicitRange = false;
   for (const token of blockTokens(theme)) {
     if (token === "carousel-block") {
       layout = "carousel";
@@ -81,11 +83,20 @@ function cardGridLayout(theme?: CmsBlockTheme): {
     if (token === "media-accordion-block") {
       layout = "media";
     }
+    if (token === "hover-card-block") {
+      layout = "hoverCard";
+    }
     const nextRange = CAROUSEL_RANGES[token];
     if (nextRange && layout !== "hover" && layout !== "media") {
-      layout = "carousel";
+      if (layout !== "hoverCard") {
+        layout = "carousel";
+      }
       range = nextRange;
+      explicitRange = true;
     }
+  }
+  if (layout === "hoverCard" && !explicitRange) {
+    range = "sm";
   }
   return { layout, range };
 }
@@ -232,6 +243,7 @@ export default function ComponentCardGrid({ data, renderContext }: ComponentCard
     layout === "carousel" ? styles["cardGrid--coverflow"] : "",
     layout === "hover" ? styles["cardGrid--hover"] : "",
     layout === "media" ? styles["cardGrid--media"] : "",
+    layout === "hoverCard" ? styles["cardGrid--hoverCard"] : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -256,7 +268,7 @@ export default function ComponentCardGrid({ data, renderContext }: ComponentCard
   return (
     <section className={sectionClass} style={sectionStyle}>
       <div className="container">
-        {layout === "media" && blockTheme?.title && blockTheme.title !== data.title ? (
+        {(layout === "media" || layout === "hoverCard") && blockTheme?.title && blockTheme.title !== data.title ? (
           <p className={styles.cardGrid__eyebrow}>{blockTheme.title}</p>
         ) : null}
         {data.title ? <h2 className={styles.cardGrid__title}>{data.title}</h2> : null}
@@ -291,7 +303,42 @@ export default function ComponentCardGrid({ data, renderContext }: ComponentCard
             ))}
           </MediaAccordion>
         ) : null}
-        {layout === "carousel" || layout === "hover" || layout === "media" ? null : (
+        {layout === "hoverCard" ? (
+          <HoverFlipGrid
+            items={data.cards.map((card) => ({
+              id: card.id,
+              title: card.title,
+              eyebrow: card.subHeading,
+              imageUrl: card.image?.url,
+              imageAlt: card.image?.title || card.title,
+            }))}
+            columns={visible}
+            range={range}
+            slideClassName={cardColClass}
+          >
+            {data.cards.map((card) => (
+              <div key={card.id}>
+                {card.copy
+                  ? renderRichText(card.copy, {
+                      classNames: {
+                        paragraph: styles.flipCopyParagraph,
+                        heading3: styles.cardGrid__copyHeading3,
+                        unorderedList: styles.cardGrid__copyList,
+                        orderedList: styles.cardGrid__copyOrderedList,
+                        listItem: styles.cardGrid__copyListItem,
+                        link: styles.cardGrid__copyLink,
+                        bold: styles.cardGrid__copyBold,
+                      },
+                      contextualLinks: renderContext?.contextualLinks,
+                    })
+                  : card.description
+                    ? <p className={styles.flipCopyParagraph}>{card.description}</p>
+                    : null}
+              </div>
+            ))}
+          </HoverFlipGrid>
+        ) : null}
+        {layout === "carousel" || layout === "hover" || layout === "media" || layout === "hoverCard" ? null : (
           <div className={`${styles.cardGrid__grid} row g-4`}>
             {data.cards.map((card) => (
               <div className={cardColClass} key={card.id}>

@@ -1,7 +1,7 @@
-import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { CmsHeroBanner, CmsRenderContext } from "../../../../lib/cms/contentful";
 import { renderRichText } from "../../richText";
+import HeroBannerMedia, { HeroScroll } from "./HeroBannerMedia";
 import styles from "./ComponentHeroBanner.module.scss";
 
 type ComponentHeroBannerProps = {
@@ -9,48 +9,46 @@ type ComponentHeroBannerProps = {
   renderContext?: CmsRenderContext;
 };
 
+function themeTokens(value: string | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+
+  return value.split(/\s+/).filter(Boolean);
+}
+
 export default function ComponentHeroBanner({ data, renderContext }: ComponentHeroBannerProps) {
   if (!data) {
     return null;
   }
 
-  const shouldHideTitle = data.blockTheme?.hideBlockTitle ?? data.hideTitle;
-  const resolvedTextColor = data.blockTheme?.primaryTextColor || data.textColor || "white";
-  const resolvedHighlightColor = data.blockTheme?.secondaryTextColor || data.highlightColor || "inherit";
+  const tokens = [...themeTokens(data.blockTheme?.blockClass), ...themeTokens(data.blockTheme?.blockClass2)];
+  const shouldHideTitle = data.blockTheme?.hideBlockTitle ?? false;
+  const eyebrow = data.eyebrow.trim();
+  const scrollText = data.scrollText.trim();
+  const resolvedTextColor = data.blockTheme?.primaryTextColor || "white";
+  const resolvedHighlightColor = data.blockTheme?.secondaryTextColor || "#e8772e";
+  const hasMedia = data.backgroundImages.length > 0;
 
   const styleVars: CSSProperties = {
     backgroundColor: data.blockTheme?.backgroundColor || "#0f1a2e",
     color: resolvedTextColor,
-    "--highlight-color": resolvedHighlightColor === "inherit" ? "#e8772e" : resolvedHighlightColor,
+    "--highlight-color": resolvedHighlightColor,
   } as CSSProperties;
 
   const heroClassNames = [styles.heroBanner];
-  for (const cls of [data.blockTheme?.blockClass, data.blockTheme?.blockClass2]) {
-    if (!cls) {
-      continue;
-    }
-    const moduleClass = styles[`heroBanner--${cls}`];
+  for (const token of tokens) {
+    const moduleClass = styles[`heroBanner--${token}`];
     if (moduleClass) {
       heroClassNames.push(moduleClass);
     }
-    heroClassNames.push(cls);
+    heroClassNames.push(token);
   }
 
   return (
     <section className={heroClassNames.join(" ")} style={styleVars}>
-      {data.backgroundImage?.url ? (
-        <div className={styles.heroBanner__background}>
-          <Image
-            src={data.backgroundImage.url}
-            alt={data.backgroundImage.title || data.title || "Hero banner background"}
-            fill
-            sizes="100vw"
-            style={{ objectFit: "cover" }}
-            priority
-          />
-          <div className={styles.heroBanner__backgroundOverlay} />
-        </div>
-      ) : null}
+      {hasMedia ? <HeroBannerMedia images={data.backgroundImages} /> : null}
+      {hasMedia ? <div className={styles.heroBanner__overlay} aria-hidden="true" /> : null}
 
       {data.backgroundSvgCode ? (
         <div className={styles.heroBanner__svg} dangerouslySetInnerHTML={{ __html: data.backgroundSvgCode }} />
@@ -58,9 +56,10 @@ export default function ComponentHeroBanner({ data, renderContext }: ComponentHe
 
       <div className={styles.heroBanner__content}>
         <div className="container">
-          <div className="row">
+          <div className={`row ${styles.heroBanner__row}`}>
             <div className="col-12 col-lg-10 col-xl-8">
               <div className={styles.heroBanner__inner}>
+                {eyebrow ? <p className={styles.heroBanner__eyebrow}>{eyebrow}</p> : null}
                 {data.title ? (
                   <h1 className={`${styles.heroBanner__title} ${shouldHideTitle ? styles["heroBanner__title--hidden"] : ""}`}>
                     {data.title}
@@ -87,6 +86,8 @@ export default function ComponentHeroBanner({ data, renderContext }: ComponentHe
           </div>
         </div>
       </div>
+
+      {scrollText ? <HeroScroll label={scrollText} /> : null}
     </section>
   );
 }
