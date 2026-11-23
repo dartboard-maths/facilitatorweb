@@ -128,7 +128,15 @@ export function ClassProfileIsland({
                 <div className={styles["school-map__challenge"]}>
                   <div className={styles["school-map__donut-wrap"]}>
                     <svg className={styles["school-map__donut"]} viewBox="0 0 42 42" aria-hidden="true">
-                      {profile.segments.map((segment, index) => (
+                      <circle
+                        className={styles["school-map__seg--not_started"]}
+                        cx="21"
+                        cy="21"
+                        r="15.5"
+                        pathLength="100"
+                        strokeDasharray="100 0"
+                      />
+                      {profile.segments.filter((segment) => segment.state !== "not_started").map((segment, index) => (
                         <circle
                           key={segment.state}
                           className={styles[`school-map__seg--${segment.state}`] ?? ""}
