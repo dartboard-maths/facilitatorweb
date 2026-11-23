@@ -15,21 +15,51 @@
   text-align: center;
 }
 
-.heroBanner__background,
-.heroBanner__backgroundOverlay,
+.heroBanner__media,
+.heroBanner__overlay,
 .heroBanner__svg {
   position: absolute;
   inset: 0;
 }
 
-.heroBanner__background {
+.heroBanner__media {
   z-index: 0;
 }
 
-.heroBanner__backgroundOverlay {
+.heroBanner__overlay {
   z-index: 1;
   background-image: linear-gradient(rgba(0, 0, 0, 0.2) 0%, $color-hero-mid 50%, $color-hero-end 100%);
   pointer-events: none;
+}
+
+.heroBanner__carousel {
+  position: absolute;
+  inset: 0;
+}
+
+.heroBanner__slide {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+
+  img {
+    object-fit: cover;
+    transform: scale(1.04);
+  }
+}
+
+.heroBanner__slide--active {
+  opacity: 1;
+
+  img {
+    animation: heroKenBurns 12s linear forwards;
+  }
+}
+
+.heroBanner__carousel--run .heroBanner__slide--active img {
+  animation-duration: 6s;
 }
 
 .heroBanner__svg {
@@ -48,10 +78,22 @@
   padding: 0;
 }
 
+.heroBanner__row {
+  justify-content: center;
+}
+
+.heroBanner__eyebrow {
+  @include block-eyebrow;
+  width: fit-content;
+  margin-inline: auto;
+  margin-bottom: 2rem;
+}
+
 .heroBanner__inner {
   width: min(100%, 50rem);
   margin-inline: auto;
   padding: 0 1.5rem;
+  text-align: center;
 }
 
 .heroBanner__title {
@@ -62,12 +104,6 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.15;
-
-  @include heading-accent(4.5rem, 3px);
-
-  &::after {
-    margin-inline: auto;
-  }
 }
 
 .heroBanner__copy {
@@ -158,19 +194,73 @@
   .heroBanner__inner {
     min-height: 0;
     justify-content: flex-start;
+    text-align: left;
+  }
+
+  .heroBanner__row {
+    justify-content: flex-start;
+  }
+
+  .heroBanner__eyebrow {
+    margin-inline: 0;
   }
 
   .heroBanner__title {
     font-size: clamp(2rem, 4vw, 3rem);
-
-    &::after {
-      margin-inline: 0;
-    }
   }
 
   .heroBanner__copy {
     margin-inline: 0;
     font-size: 1.05rem;
+  }
+}
+
+.heroBanner__scroll {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  opacity: 0.7;
+  transform: translateX(-50%);
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+    opacity: 1;
+  }
+}
+
+@keyframes heroKenBurns {
+  from {
+    transform: scale(1.04);
+  }
+
+  to {
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroBanner__slide {
+    transition: none;
+  }
+
+  .heroBanner__slide--active img {
+    animation: none;
   }
 }
 

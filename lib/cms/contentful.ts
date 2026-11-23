@@ -145,13 +145,12 @@ export type CmsHeroBanner = {
   type: "componentHeroBanner";
   id: string;
   data: {
+    eyebrow: string;
     title: string;
-    hideTitle: boolean;
     copy?: CmsRichTextDocument;
-    textColor: string;
-    highlightColor: string;
-    backgroundImage?: CmsImage;
+    backgroundImages: CmsImage[];
     backgroundSvgCode: string;
+    scrollText: string;
     blockTheme?: CmsBlockTheme;
   };
 };
@@ -413,6 +412,17 @@ function resolveEntryArray(value: unknown, maps: ResolvedMaps): ContentfulEntry[
   return localized
     .map((item) => resolveEntryLink(item, maps))
     .filter((item): item is ContentfulEntry => Boolean(item));
+}
+
+function resolveAssetArray(value: unknown, maps: ResolvedMaps): ContentfulAsset[] {
+  const localized = getLocalizedValue<unknown>(value);
+  if (!Array.isArray(localized)) {
+    return [];
+  }
+
+  return localized
+    .map((item) => resolveAssetLink(item, maps))
+    .filter((item): item is ContentfulAsset => Boolean(item));
 }
 
 function resolveAssetLink(value: unknown, maps: ResolvedMaps): ContentfulAsset | undefined {
@@ -745,17 +755,25 @@ function transformComponent(entry: ContentfulEntry | undefined, maps: ResolvedMa
 
   if (componentId === "componentHeroBanner") {
     const blockThemeEntry = resolveEntryLink(entry.fields?.blockTheme, maps);
+    const backgroundImages = resolveAssetArray(entry.fields?.backgroundImages, maps)
+      .map((asset) => transformAssetToImage(asset))
+      .filter((image): image is CmsImage => Boolean(image));
+    const legacyBackground = transformAssetToImage(resolveAssetLink(entry.fields?.backgroundImage, maps));
+
+    if (backgroundImages.length === 0 && legacyBackground) {
+      backgroundImages.push(legacyBackground);
+    }
+
     return {
       type: "componentHeroBanner",
       id: entry.sys.id,
       data: {
+        eyebrow: getField<string>(entry, "eyebrow") || "",
         title: getField<string>(entry, "title") || "",
-        hideTitle: Boolean(getField<boolean>(entry, "hideTitle")),
         copy: getRichTextDocument(entry.fields?.copy),
-        textColor: getField<string>(entry, "textColor") || "",
-        highlightColor: getField<string>(entry, "highlightColor") || "",
-        backgroundImage: transformAssetToImage(resolveAssetLink(entry.fields?.backgroundImage, maps)),
+        backgroundImages,
         backgroundSvgCode: getField<string>(entry, "backgroundSvgCode") || "",
+        scrollText: getField<string>(entry, "scrollText") || "",
         blockTheme: transformBlockTheme(blockThemeEntry, maps),
       },
     };
